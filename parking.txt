@@ -1,0 +1,839 @@
+Build a modern, sleek and premium **Smart Parking IoT Dashboard** web application.
+
+The application is a frontend prototype for a real IoT smart parking system with **2 parking slots**.
+
+## Tech Stack
+
+Use:
+
+* React
+* Vite
+* Tailwind CSS
+* Lucide React for icons
+* JavaScript or JSX
+* Component-based architecture
+
+Do NOT use React Native.
+
+For this first version, build the frontend only.
+
+Do NOT connect to ESP32, Supabase, MQTT, APIs, or any backend yet.
+
+Use realistic mock data and simulated device states so the UI feels like a real IoT dashboard.
+
+The code structure should make it easy to replace mock data with real Supabase/ESP32 data later.
+
+---
+
+# Main Design Direction
+
+The visual style should be inspired by premium modern Smart Home / IoT dashboards.
+
+The final UI should feel:
+
+* Premium
+* Minimal
+* Modern
+* Clean
+* Professional
+* Slightly futuristic
+* Mobile-first
+* Suitable for an IoT university project
+
+Use a **Dark Mode** interface.
+
+### Color Palette
+
+Background:
+
+* #121212
+* Tailwind `bg-neutral-950` / `bg-neutral-900`
+
+Cards:
+
+* `bg-neutral-800`
+* `bg-neutral-850` where appropriate
+
+Primary accent:
+
+* Bright blue
+* Tailwind `blue-500`
+* Tailwind `blue-600`
+
+Text:
+
+* Primary: white
+* Secondary: neutral-400
+* Muted: neutral-500
+
+Available:
+
+* Green for available parking
+* Red/orange for occupied parking
+* Blue for active controls
+
+Avoid excessive colors.
+
+Use blue as the main visual identity.
+
+---
+
+# General UI Style
+
+Use generous rounded corners everywhere.
+
+Prefer:
+
+* `rounded-2xl`
+* `rounded-3xl`
+
+Cards should have:
+
+* subtle borders
+* soft shadows
+* subtle gradients where appropriate
+* enough internal padding
+* clear visual hierarchy
+
+Active elements can have a subtle blue glow.
+
+Avoid overly flashy neon effects.
+
+The design should look like a real commercial IoT dashboard rather than a gaming UI.
+
+Use a modern sans-serif font such as:
+
+* Inter
+* system-ui
+* SF Pro style fallback
+
+---
+
+# Application Structure
+
+Create 3 main views:
+
+1. Dashboard
+2. Usage / Analytics
+3. Account / System
+
+The main focus is the Dashboard.
+
+Use a fixed bottom navigation bar on mobile.
+
+Navigation items:
+
+* Home
+* Usage
+* Favorites
+* Account
+
+Use Lucide React icons.
+
+The active navigation item should have a blue circular/rounded highlight.
+
+On desktop, the layout can adapt into a wider dashboard with the navigation remaining visually consistent.
+
+---
+
+# VIEW 1 — DASHBOARD
+
+This is the main Smart Parking screen.
+
+## Header
+
+Create a premium dashboard header.
+
+Display:
+
+"Smart Parking"
+
+Subtitle:
+
+"Monitor your parking area"
+
+On the right side:
+
+* small system status indicator
+* green dot
+* "System Online"
+
+Example:
+
+Smart Parking
+Monitor your parking area
+
+● System Online
+
+Do not use a fake weather widget because this is a parking IoT system.
+
+---
+
+# Parking Overview
+
+Create a large summary card near the top.
+
+Example:
+
+"Parking Overview"
+
+Show:
+
+2 Total Slots
+
+Then display:
+
+1 Available
+1 Occupied
+
+Use a clean visual hierarchy.
+
+Example:
+
+┌─────────────────────────────┐
+│ Parking Overview             │
+│                              │
+│  2       1        1          │
+│ Total   Free   Occupied      │
+│                              │
+│ ███████████░░░░              │
+└─────────────────────────────┘
+
+Use blue for total/primary information.
+
+Use green for available.
+
+Use orange/red for occupied.
+
+---
+
+# PARKING SLOT CARDS
+
+Create a 2-column responsive grid.
+
+There are exactly two parking slots:
+
+* Parking Slot 01
+* Parking Slot 02
+
+Each slot is represented by a large premium card.
+
+Each card should contain:
+
+* parking slot number
+* status
+* car/parking icon
+* distance reading
+* availability indicator
+* parking light status
+
+Example:
+
+Parking Slot 01
+
+AVAILABLE
+
+Distance
+185 cm
+
+Parking Light
+ON
+
+For an occupied slot:
+
+Parking Slot 02
+
+OCCUPIED
+
+Distance
+42 cm
+
+Parking Light
+OFF
+
+---
+
+# Visual Parking Slot Design
+
+Do not make the cards look like generic statistics cards.
+
+Make them visually communicate an actual parking space.
+
+Inside each card, include a simple visual representation:
+
+* parking icon
+* car icon
+* P symbol
+* or minimal parking-space illustration
+
+When AVAILABLE:
+
+Use subtle green glow.
+
+When OCCUPIED:
+
+Use subtle red/orange glow.
+
+Do not make the glow excessive.
+
+---
+
+# Slot Status
+
+The status must be visually obvious.
+
+AVAILABLE:
+
+Green dot + "Available"
+
+OCCUPIED:
+
+Orange/red dot + "Occupied"
+
+Use large typography for the state.
+
+Example:
+
+● AVAILABLE
+
+---
+
+# Ultrasonic Sensor Information
+
+Each parking slot should show the ultrasonic sensor reading.
+
+Example:
+
+Distance
+
+185 cm
+
+Below it:
+
+Ultrasonic Sensor
+
+ONLINE
+
+This will later represent the real HC-SR04 sensor connected to ESP32.
+
+For now use mock values.
+
+Do not create a fake random animation.
+
+Use static mock values or a simple controlled simulation.
+
+---
+
+# Parking Light
+
+Each parking slot has a parking indicator light.
+
+Display:
+
+Parking Light
+
+ON / OFF
+
+Use a toggle switch.
+
+The toggle is currently UI-only.
+
+Later it will be connected to ESP32.
+
+When ON:
+
+Use blue/green active styling.
+
+When OFF:
+
+Use neutral dark styling.
+
+---
+
+# QUICK SYSTEM STATUS
+
+Add a small section below the parking slots.
+
+Title:
+
+"System Status"
+
+Display compact cards:
+
+ESP32
+Online
+
+Ultrasonic Sensor 01
+Online
+
+Ultrasonic Sensor 02
+Online
+
+Last Update
+Just now
+
+Use small status indicators.
+
+---
+
+# ACTIVITY / RECENT EVENTS
+
+Create a small recent activity section.
+
+Example:
+
+Recent Activity
+
+● Slot 01 became available
+2 min ago
+
+● Slot 02 became occupied
+8 min ago
+
+● Ultrasonic sensor updated
+12 min ago
+
+Use muted text.
+
+This should make the dashboard feel like a real IoT monitoring system.
+
+---
+
+# VIEW 2 — USAGE / ANALYTICS
+
+Create a Usage page inspired by premium IoT analytics dashboards.
+
+Header:
+
+"Usage"
+
+Subtitle:
+
+"See parking activity and sensor reports here"
+
+---
+
+# Time Range Tabs
+
+Create tabs:
+
+1D
+1W
+1M
+3M
+1Y
+
+Make:
+
+1M
+
+the active tab.
+
+Use blue active styling.
+
+---
+
+# Parking Activity Chart
+
+Create a clean line chart.
+
+The chart should represent:
+
+"Parking Occupancy"
+
+X-axis:
+
+Time
+
+Y-axis:
+
+Occupancy
+
+Example data:
+
+12 AM
+4 AM
+8 AM
+12 PM
+4 PM
+8 PM
+
+Use a blue line.
+
+Include a highlighted data point.
+
+Show a tooltip such as:
+
+"12:00 PM"
+
+"1 Slot Occupied"
+
+The chart should look premium and minimal.
+
+If using a chart library, prefer a lightweight React-compatible solution.
+
+If a chart library is not necessary, create a simple SVG-based chart.
+
+---
+
+# Device / Sensor Usage
+
+Title:
+
+"Detail Device"
+
+Create a vertical list.
+
+Items:
+
+Ultrasonic Sensor 01
+Ultrasonic Sensor 02
+ESP32 Controller
+
+Each item should have:
+
+* circular icon
+* device name
+* online status
+* update count / activity
+* last update
+
+Example:
+
+Ultrasonic Sensor 01
+
+Online
+
+Updates
+1,248
+
+Last update
+Just now
+
+Use blue circular icon backgrounds.
+
+---
+
+# VIEW 3 — ACCOUNT / SYSTEM
+
+Create a simple system information page.
+
+Header:
+
+"System"
+
+Subtitle:
+
+"Smart Parking system information"
+
+Sections:
+
+System Information
+
+ESP32 Controller
+Online
+
+Ultrasonic Sensors
+2 / 2 Online
+
+Parking Slots
+2
+
+System Status
+Operational
+
+---
+
+# SETTINGS CARD
+
+Create settings-style cards:
+
+Notifications
+ON
+
+Auto Refresh
+ON
+
+Dark Mode
+ON
+
+Use toggle switches.
+
+These are UI-only for now.
+
+---
+
+# BOTTOM NAVIGATION
+
+Create a fixed bottom navigation bar on mobile.
+
+Items:
+
+Home
+Usage
+Favorites
+Account
+
+Use:
+
+Home → House icon
+Usage → BarChart3 icon
+Favorites → Heart icon
+Account → User icon
+
+The active item should have:
+
+* blue circular/rounded background
+* white icon
+* subtle blue glow
+
+Example:
+
+```
+    🏠
+   Home
+```
+
+The navigation should be:
+
+* fixed
+* bottom: 0
+* full width
+* dark background
+* slightly translucent
+* subtle top border
+* backdrop blur
+
+Add enough bottom padding to the page so content is not hidden behind the navigation bar.
+
+---
+
+# RESPONSIVE DESIGN
+
+The design must be mobile-first.
+
+Mobile:
+
+* 1-column layout where appropriate
+* 2 parking slots side-by-side if screen width allows
+* fixed bottom navigation
+
+Tablet:
+
+* wider cards
+* better spacing
+
+Desktop:
+
+Create a centered dashboard with max width around:
+
+`max-w-7xl`
+
+Use a multi-column layout.
+
+For example:
+
+Desktop:
+
+┌──────────────────────────────────────────┐
+│ Header                                   │
+├──────────────────────┬───────────────────┤
+│ Parking Overview     │ System Status     │
+├──────────────┬───────┴───────────────────┤
+│ Slot 01      │ Slot 02                  │
+├──────────────┴───────────────────────────┤
+│ Activity / Analytics                     │
+└──────────────────────────────────────────┘
+
+---
+
+# COMPONENT ARCHITECTURE
+
+Do NOT put the entire application inside App.jsx.
+
+Create reusable components.
+
+Suggested structure:
+
+src/
+
+components/
+
+* Layout.jsx
+* BottomNavigation.jsx
+* Header.jsx
+* ParkingOverview.jsx
+* ParkingSlotCard.jsx
+* SensorStatus.jsx
+* SystemStatus.jsx
+* ActivityList.jsx
+* UsageChart.jsx
+* DeviceList.jsx
+* Toggle.jsx
+
+pages/
+
+* Dashboard.jsx
+* Usage.jsx
+* Account.jsx
+
+data/
+
+* mockData.js
+
+App.jsx
+
+---
+
+# MOCK DATA
+
+Create a dedicated mock data file.
+
+Example structure:
+
+parkingSlots = [
+{
+id: 1,
+name: "Parking Slot 01",
+status: "available",
+distance: 185,
+light: true,
+sensor: "online"
+},
+{
+id: 2,
+name: "Parking Slot 02",
+status: "occupied",
+distance: 42,
+light: false,
+sensor: "online"
+}
+]
+
+Do not hard-code these values throughout the UI.
+
+The UI should consume the mock data.
+
+---
+
+# STATE MANAGEMENT
+
+Use React state for UI interactions.
+
+The following should work:
+
+* switch between Dashboard / Usage / Account
+* toggle parking light
+* toggle settings
+* switch analytics time range
+* interact with navigation
+* simulate changing slot status if useful
+
+Do not add unnecessary state-management libraries.
+
+React useState/useMemo is sufficient.
+
+---
+
+# FUTURE BACKEND COMPATIBILITY
+
+Structure the application so that the mock data can later be replaced by:
+
+ESP32
+↓
+HC-SR04
+↓
+WiFi
+↓
+Supabase
+↓
+React Dashboard
+
+Do not implement this connection yet.
+
+But make component props/data structures clean enough that replacing mock data with Supabase realtime data later is straightforward.
+
+For example:
+
+<ParkingSlotCard
+slot={slot}
+/>
+
+rather than hard-coding:
+
+<ParkingSlotCard
+distance="185"
+status="available"
+/>
+
+---
+
+# IMPORTANT UI BEHAVIOR
+
+The dashboard should immediately communicate:
+
+1. How many parking slots exist
+2. Which slots are available
+3. Which slots are occupied
+4. Current ultrasonic distance
+5. Whether the parking indicator light is ON/OFF
+6. Whether the IoT system is online
+
+The user should understand the parking situation within 2–3 seconds after opening the dashboard.
+
+---
+
+# DESIGN QUALITY
+
+Avoid:
+
+* generic Bootstrap-looking UI
+* excessive gradients
+* excessive neon
+* huge unnecessary text
+* clutter
+* too many cards
+* random colors
+* excessive animations
+* fake 3D effects
+
+Prefer:
+
+* clean spacing
+* strong typography
+* subtle animations
+* rounded cards
+* dark premium surfaces
+* blue accent
+* clear status colors
+* professional IoT dashboard aesthetics
+
+Use subtle transitions such as:
+
+`transition-all duration-200`
+
+For hover:
+
+`hover:bg-neutral-700`
+
+For active states:
+
+subtle blue glow.
+
+---
+
+# FINAL REQUIREMENT
+
+After implementation:
+
+1. Make sure the project runs with Vite.
+2. Make sure there are no compilation errors.
+3. Make sure all navigation works.
+4. Make sure all buttons/toggles have visible UI feedback.
+5. Make sure the layout works on mobile and desktop.
+6. Make sure the UI looks polished before finishing.
+7. Keep the code clean and componentized.
+
+Do not connect any backend yet.
+
+The goal of this stage is to create a polished **Smart Parking IoT frontend prototype** that is ready for ESP32 + Supabase integration later.
