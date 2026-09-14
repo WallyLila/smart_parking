@@ -66,9 +66,15 @@ export const App = () => {
 
     // Subscribe to real-time slot changes from Supabase (e.g. from ESP32)
     const slotChannel = subscribeToSlotChanges((updatedSlot) => {
-      setSlots((prev) =>
-        prev.map((s) => (s.id === updatedSlot.id ? { ...s, ...updatedSlot } : s))
-      );
+      setSlots((prev) => {
+        const exists = prev.some((s) => String(s.id) === String(updatedSlot.id));
+        if (exists) {
+          return prev.map((s) =>
+            String(s.id) === String(updatedSlot.id) ? { ...s, ...updatedSlot } : s
+          );
+        }
+        return [...prev, updatedSlot].sort((a, b) => Number(a.id) - Number(b.id));
+      });
     });
 
     // Subscribe to real-time activity log inserts
@@ -93,12 +99,12 @@ export const App = () => {
 
   // Toggle parking light in state and Supabase
   const handleToggleLight = async (slotId) => {
-    const targetSlot = slots.find((s) => s.id === slotId);
+    const targetSlot = slots.find((s) => String(s.id) === String(slotId));
     if (!targetSlot) return;
 
     // Optimistic UI update
     setSlots((prev) =>
-      prev.map((s) => (s.id === slotId ? { ...s, light: !s.light } : s))
+      prev.map((s) => (String(s.id) === String(slotId) ? { ...s, light: !s.light } : s))
     );
 
     // Sync to Supabase
@@ -107,7 +113,7 @@ export const App = () => {
 
   // Toggle slot status between available and occupied (updates Supabase for testing/simulation)
   const handleToggleStatus = async (slotId) => {
-    const targetSlot = slots.find((s) => s.id === slotId);
+    const targetSlot = slots.find((s) => String(s.id) === String(slotId));
     if (!targetSlot) return;
 
     const newStatus = targetSlot.status === 'available' ? 'occupied' : 'available';
@@ -116,7 +122,7 @@ export const App = () => {
     // Optimistic UI update
     setSlots((prev) =>
       prev.map((s) => {
-        if (s.id !== slotId) return s;
+        if (String(s.id) !== String(slotId)) return s;
         return {
           ...s,
           status: newStatus,

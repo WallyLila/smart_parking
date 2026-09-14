@@ -124,12 +124,15 @@ export const subscribeToSlotChanges = (onUpdate) => {
       'postgres_changes',
       { event: '*', schema: 'public', table: 'parking_slots' },
       (payload) => {
+        console.log('[Supabase Realtime] parking_slots update received:', payload);
         if (payload.new && onUpdate) {
           onUpdate(payload.new);
         }
       }
     )
-    .subscribe();
+    .subscribe((status) => {
+      console.log('[Supabase Realtime] parking_slots subscription status:', status);
+    });
 
   return channel;
 };
@@ -146,6 +149,7 @@ export const subscribeToActivityChanges = (onNewActivity) => {
       'postgres_changes',
       { event: 'INSERT', schema: 'public', table: 'parking_activities' },
       (payload) => {
+        console.log('[Supabase Realtime] parking_activities insert received:', payload);
         if (payload.new && onNewActivity) {
           onNewActivity({
             id: payload.new.id,
@@ -156,7 +160,9 @@ export const subscribeToActivityChanges = (onNewActivity) => {
         }
       }
     )
-    .subscribe();
+    .subscribe((status) => {
+      console.log('[Supabase Realtime] parking_activities subscription status:', status);
+    });
 
   return channel;
 };

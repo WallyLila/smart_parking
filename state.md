@@ -54,6 +54,9 @@ E:/smart_parking/
 │   ├── App.jsx                     # จุดควบคุม State, Realtime Listener และ Routing
 │   ├── index.css                   # การตั้งค่าฟอนต์และการรองรับ Dark/Light Mode
 │   └── main.jsx                    # จุดเริ่มต้นการ Render ของ React DOM
+├── arduino/
+│   ├── smart_parking_esp32.ino         # โค้ด Arduino IDE สำหรับ ESP32 + HC-SR04 + Supabase REST API
+│   └── README.md                       # แผนผังการต่อขา (Wiring Diagram) และคู่มือการติดตั้งไลบรารี
 ├── .env                            # ไฟล์ใส่ API Key ของ Supabase (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY)
 ├── .env.example                    # ตัวอย่างการกำหนดค่า Environment Variables
 ├── supabase_schema.sql             # SQL Script สำหรับสร้างตาราง, RLS และ Realtime ใน Supabase
