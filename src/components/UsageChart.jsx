@@ -25,28 +25,28 @@ export const UsageChart = () => {
   const areaD = `${pathD} L 550 180 L 50 180 Z`;
 
   return (
-    <div className="bg-neutral-800 border border-neutral-700/60 rounded-3xl p-6 shadow-lg shadow-black/20 space-y-6">
+    <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 rounded-3xl p-6 sm:p-8 shadow-soft dark:shadow-none space-y-6 transition-colors duration-200">
       {/* Chart Header & Time Range Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h3 className="text-base font-semibold text-white tracking-tight">
+          <h3 className="text-base sm:text-lg font-bold text-neutral-900 dark:text-white tracking-tight transition-colors">
             Parking Occupancy
           </h3>
-          <p className="text-xs text-neutral-400 mt-0.5">
-            Average occupancy distribution
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 font-medium transition-colors">
+            Average occupancy distribution across 2 monitored bays
           </p>
         </div>
 
         {/* Time Range Tabs */}
-        <div className="flex items-center bg-neutral-900 p-1 rounded-2xl border border-neutral-700/60 self-start sm:self-auto">
+        <div className="flex items-center bg-neutral-100 dark:bg-neutral-800 p-1 rounded-full border border-neutral-200/60 dark:border-neutral-700 self-start sm:self-auto transition-colors">
           {timeTabs.map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-3 py-1 rounded-xl text-xs font-semibold transition-all duration-200 ${
+              className={`px-3.5 py-1 rounded-full text-xs font-semibold transition-all duration-200 ${
                 activeTab === tab
-                  ? 'bg-blue-600 text-white shadow-blue-glow-sm'
-                  : 'text-neutral-400 hover:text-white'
+                  ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-sm'
+                  : 'text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white'
               }`}
             >
               {tab}
@@ -56,46 +56,50 @@ export const UsageChart = () => {
       </div>
 
       {/* SVG Line Chart Container */}
-      <div className="relative pt-4">
+      <div className="relative pt-2">
         {/* Floating Tooltip for Highlighted/Hovered Point */}
         {hoveredPoint && (
-          <div className="mb-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-neutral-900 border border-neutral-700/80 text-xs shadow-md">
-            <span className="font-semibold text-white">{hoveredPoint.time}</span>
+          <div className="mb-3 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neutral-900 dark:bg-neutral-800 border border-neutral-800 dark:border-neutral-700 text-white text-xs shadow-soft-sm font-medium transition-colors">
+            <span className="font-bold">{hoveredPoint.time}</span>
             <span className="text-neutral-400">•</span>
-            <span className="text-blue-400 font-medium">{hoveredPoint.label}</span>
+            <span className="text-neutral-200 dark:text-neutral-300">{hoveredPoint.label}</span>
           </div>
         )}
 
         <div className="w-full h-56">
           <svg className="w-full h-full overflow-visible" viewBox="0 0 600 220" preserveAspectRatio="none">
             <defs>
-              <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.25" />
-                <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.0" />
+              <linearGradient id="chartGradientLight" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#111827" stopOpacity="0.08" />
+                <stop offset="100%" stopColor="#111827" stopOpacity="0.0" />
+              </linearGradient>
+              <linearGradient id="chartGradientDark" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#60a5fa" stopOpacity="0.25" />
+                <stop offset="100%" stopColor="#60a5fa" stopOpacity="0.0" />
               </linearGradient>
             </defs>
 
             {/* Horizontal Grid lines */}
-            <line x1="40" y1="30" x2="560" y2="30" stroke="#333333" strokeDasharray="3 3" />
-            <line x1="40" y1="100" x2="560" y2="100" stroke="#333333" strokeDasharray="3 3" />
-            <line x1="40" y1="180" x2="560" y2="180" stroke="#333333" />
+            <line x1="40" y1="30" x2="560" y2="30" className="stroke-[#f0f2f5] dark:stroke-[#262626]" strokeDasharray="4 4" strokeWidth="1.5" />
+            <line x1="40" y1="100" x2="560" y2="100" className="stroke-[#f0f2f5] dark:stroke-[#262626]" strokeDasharray="4 4" strokeWidth="1.5" />
+            <line x1="40" y1="180" x2="560" y2="180" className="stroke-[#e5e7eb] dark:stroke-[#333333]" strokeWidth="1.5" />
 
             {/* Y Axis Labels */}
-            <text x="25" y="34" fill="#737373" fontSize="11" textAnchor="end">2</text>
-            <text x="25" y="104" fill="#737373" fontSize="11" textAnchor="end">1</text>
-            <text x="25" y="184" fill="#737373" fontSize="11" textAnchor="end">0</text>
+            <text x="25" y="34" className="fill-neutral-400 dark:fill-neutral-500 text-[11px] font-semibold" textAnchor="end">2</text>
+            <text x="25" y="104" className="fill-neutral-400 dark:fill-neutral-500 text-[11px] font-semibold" textAnchor="end">1</text>
+            <text x="25" y="184" className="fill-neutral-400 dark:fill-neutral-500 text-[11px] font-semibold" textAnchor="end">0</text>
 
             {/* Area under curve */}
-            <path d={areaD} fill="url(#chartGradient)" />
+            <path d={areaD} className="fill-[url(#chartGradientLight)] dark:fill-[url(#chartGradientDark)]" />
 
-            {/* Blue Line */}
+            {/* Charcoal / Blue Line */}
             <path
               d={pathD}
               fill="none"
-              stroke="#3B82F6"
-              strokeWidth="3"
+              strokeWidth="3.5"
               strokeLinecap="round"
               strokeLinejoin="round"
+              className="stroke-neutral-900 dark:stroke-blue-400"
             />
 
             {/* Data Points */}
@@ -107,27 +111,24 @@ export const UsageChart = () => {
                   className="cursor-pointer"
                   onMouseEnter={() => setHoveredPoint(pt.item)}
                 >
-                  {/* Subtle pulsing highlight ring for 12 PM or selected */}
+                  {/* Subtle pulsing highlight ring for selected */}
                   {isSelected && (
                     <circle
                       cx={pt.x}
                       cy={pt.y}
-                      r="9"
+                      r="10"
                       fill="none"
-                      stroke="#3B82F6"
                       strokeWidth="2"
-                      opacity="0.6"
-                      className="animate-pulse"
+                      opacity="0.3"
+                      className="animate-pulse stroke-neutral-900 dark:stroke-blue-400"
                     />
                   )}
                   <circle
                     cx={pt.x}
                     cy={pt.y}
-                    r={isSelected ? "5" : "4"}
-                    fill="#1e1e1e"
-                    stroke="#3B82F6"
-                    strokeWidth="2.5"
-                    className="transition-all duration-200"
+                    r={isSelected ? "5.5" : "4"}
+                    strokeWidth="3"
+                    className="transition-all duration-200 fill-white dark:fill-neutral-900 stroke-neutral-900 dark:stroke-blue-400"
                   />
                 </g>
               );
@@ -139,8 +140,7 @@ export const UsageChart = () => {
                 key={idx}
                 x={pt.x}
                 y="206"
-                fill="#737373"
-                fontSize="11"
+                className="fill-neutral-400 dark:fill-neutral-500 text-[11px] font-semibold"
                 textAnchor="middle"
                 fontFamily="inherit"
               >

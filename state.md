@@ -1,14 +1,14 @@
 # สถานะล่าสุดของโปรเจกต์ (Project State)
 
-**บันทึกเมื่อเวลา:** 14 กันยายน 2026 เวลา 20:11:41 น. (+07:00)  
+**บันทึกเมื่อเวลา:** 14 กันยายน 2026 เวลา 21:58:30 น. (+07:00)  
 **ชื่อโปรเจกต์:** Smart Parking IoT Dashboard (`smart-parking-iot`)  
 **โฟลเดอร์โปรเจกต์:** `E:\smart_parking`  
-**แหล่งอ้างอิงหลัก (Source of Truth):** [parking.txt](file:///E:/smart_parking/parking.txt)
+**แหล่งอ้างอิงหลัก (Source of Truth):** [parking.txt](file:///E:/smart_parking/parking.txt) และแบบอ้างอิงดีไซน์ [ref/ref.png](file:///E:/smart_parking/ref/ref.png) ตามข้อกำหนดใน [ref/ref.txt](file:///E:/smart_parking/ref/ref.txt)
 
 ---
 
 ## 1. ภาพรวมของระบบ (Project Overview)
-โปรเจกต์นี้เป็นเว็บแอปพลิเคชัน Frontend Prototype สำหรับระบบ **Smart Parking IoT** รองรับช่องจอดรถจริงจำนวน **2 ช่องจอด (Parking Slot 01 และ Parking Slot 02)** โดยพัฒนาขึ้นตามข้อกำหนด กฎเกณฑ์ และโครงสร้างใน `parking.txt` ทุกประการ โดยยังไม่มีการเชื่อมต่อ Backend ภายนอก (เน้นจำลอง Mock Data ที่พร้อมเชื่อมต่อกับ ESP32 + Supabase ได้ทันทีในอนาคต)
+โปรเจกต์นี้เป็นเว็บแอปพลิเคชัน Frontend Prototype สำหรับระบบ **Smart Parking IoT** รองรับช่องจอดรถจริงจำนวน **2 ช่องจอด (Parking Slot 01 และ Parking Slot 02)** โดยพัฒนาขึ้นตามข้อกำหนด กฎเกณฑ์ และโครงสร้างใน `parking.txt` และได้รับการ Restyle ให้เข้ากับสไตล์ **Apple-like Minimalist Light Mode** ตามภาพอ้างอิง `ref/ref.png` และกติกาใน `ref/ref.txt` ทุกประการ โดยยังคง Logic, State, Hook, Event Handlers เดิมไว้อย่างครบถ้วน 100%
 
 ---
 
@@ -18,10 +18,9 @@
 - **CSS Framework:** Tailwind CSS 3.4
 - **Icon Library:** Lucide React
 - **Language:** JavaScript / JSX
-- **Design System:** Dark Mode (Background: `#121212`, Cards: `bg-neutral-800` / `bg-neutral-850`, Accent: Blue `blue-500`/`blue-600` พร้อม Subtle Glow, สถานะ: เขียว `#22C55E` / ส้ม-แดง `#F97316`)
-- **Server Status:** กำลังทำงาน (Vite Dev Server)
-  - เข้าใช้งานบนคอมพิวเตอร์: `http://localhost:3000`
-  - เข้าใช้งานผ่านโทรศัพท์มือถือในวง Wi-Fi: `http://192.168.1.176:3000`
+- **Typography:** Plus Jakarta Sans & Inter
+- **Design System:** Apple Minimalist Light Mode (Background: `#f7f8fa`, Surface Cards: Pure White `bg-white` with `rounded-3xl` / `rounded-[2.5rem]`, Diffuse Shadows `shadow-soft` & `shadow-float`, Pills `rounded-full`, Primary Text: `#111827`, Status: Emerald `#059669` / Charcoal `#1f2937`)
+- **Server Status:** พอร์ต 3000 (`http://localhost:3000` และ `http://192.168.1.176:3000`)
 
 ---
 
@@ -33,7 +32,7 @@ E:/smart_parking/
 │   ├── components/
 │   │   ├── Layout.jsx              # โครงหน้าเว็บหลัก ควบคุมความกว้าง max-w-7xl และ Padding
 │   │   ├── BottomNavigation.jsx    # แถบนำทางด้านล่างสำหรับมือถือ (ซ่อนบนคอมพิวเตอร์ด้วย md:hidden)
-│   │   ├── Header.jsx              # ส่วนหัวของหน้าเว็บ พร้อมแถบเมนูนำทางบนจอคอมและสถานะ System Online
+│   │   ├── Header.jsx              # ส่วนหัวของหน้าเว็บ พร้อมแถบเมนูนำทางบนจอคอมและปุ่มสลับ Dark/Light Mode
 │   │   ├── ParkingOverview.jsx     # การ์ดสรุปภาพรวมช่องจอด (Total: 2, Free: 1, Occupied: 1) พร้อม Progress Bar
 │   │   ├── ParkingSlotCard.jsx     # การ์ดแสดงช่องจอดรถ 2 ช่อง พร้อมระยะเซนเซอร์และสวิตช์ไฟ
 │   │   ├── SensorStatus.jsx        # คอมโพเนนต์แสดงสถานะเซนเซอร์แบบกะทัดรัด
@@ -45,18 +44,24 @@ E:/smart_parking/
 │   ├── pages/
 │   │   ├── Dashboard.jsx           # หน้าหลัก (View 1): จัดวางแบบ Multi-column พอดีกับหน้าจอคอมพิวเตอร์
 │   │   ├── Usage.jsx               # หน้าสถิติ (View 2): ดูกราฟแนวโน้มและรายละเอียดอุปกรณ์
-│   │   ├── Account.jsx             # หน้าระบบ (View 3): ข้อมูลระบบและการตั้งค่า Toggle
+│   │   ├── Account.jsx             # หน้าระบบ (View 3): ข้อมูลระบบและการตั้งค่า Toggle + สถานะ Supabase
 │   │   └── Favorites.jsx           # หน้าช่องจอดที่บันทึกไว้ (Favorites)
+│   ├── services/
+│   │   ├── supabase.js             # Supabase Client Initialization & Config Detection
+│   │   └── parkingService.js       # Data Fetching & Supabase Realtime Subscriptions
 │   ├── data/
 │   │   └── mockData.js             # แหล่งรวม Mock Data กลางของช่องจอด อุปกรณ์ กราฟ และประวัติ
-│   ├── App.jsx                     # จุดควบคุม State และการสลับหน้า (Routing)
-│   ├── index.css                   # การตั้งค่าฟอนต์ Inter และสไตล์ Dark Scrollbar
+│   ├── App.jsx                     # จุดควบคุม State, Realtime Listener และ Routing
+│   ├── index.css                   # การตั้งค่าฟอนต์และการรองรับ Dark/Light Mode
 │   └── main.jsx                    # จุดเริ่มต้นการ Render ของ React DOM
+├── .env                            # ไฟล์ใส่ API Key ของ Supabase (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY)
+├── .env.example                    # ตัวอย่างการกำหนดค่า Environment Variables
+├── supabase_schema.sql             # SQL Script สำหรับสร้างตาราง, RLS และ Realtime ใน Supabase
 ├── index.html                      # หน้า HTML หลัก
-├── tailwind.config.js              # กำหนดโทนสีและเงา Blue/Green Glow
+├── tailwind.config.js              # กำหนดโทนสีและเงา
 ├── postcss.config.js               # การตั้งค่า PostCSS
 ├── vite.config.js                  # ตั้งค่าโฮสต์ 0.0.0.0 และพอร์ต 3000
-├── package.json                    # รายการ Dependencies
+├── package.json                    # รายการ Dependencies (ติดตั้ง @supabase/supabase-js แล้ว)
 ├── state.md                        # บันทึกสถานะล่าสุดของโปรเจกต์
 └── parking.txt                     # เอกสารสเปกหลัก (Single Source of Truth)
 ```
@@ -84,7 +89,10 @@ E:/smart_parking/
 
 ### 4.3 หน้า System / Account (View 3)
 - ข้อมูลระบบ: ESP32 Controller (Online), Ultrasonic Sensors (2/2 Online), Parking Slots (2), System Status (Operational)
-- การ์ด Settings พร้อมสวิตช์ Toggle ทำงานได้จริง: Notifications, Auto Refresh, Dark Mode
+- การ์ด Settings พร้อมสวิตช์ Toggle ทำงานได้จริง:
+  - **Notifications** และ **Auto Refresh**
+  - **Dark Mode:** เชื่อมต่อกับระบบธีมจริง สลับระหว่าง Light Mode และ Dark Mode ได้ทันที พร้อมบันทึกสถานะลงใน `localStorage` ให้จดจำธีมที่เลือกไว้
+- **Header Quick Dark Mode:** เพิ่มปุ่มสลับธีม พระอาทิตย์/พระจันทร์ บนแถบ Header ให้กดสลับได้ทันทีจากทุกหน้า
 
 ### 4.4 หน้า Favorites
 - รวมช่องจอดที่ปักหมุดไว้ พร้อมสวิตช์ควบคุมไฟและทดสอบสลับสถานะ

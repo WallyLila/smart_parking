@@ -8,17 +8,18 @@ export default {
   theme: {
     extend: {
       colors: {
-        'neutral-850': '#1f1f1f',
-        'dark-bg': '#121212',
+        'surface-subtle': '#f8f9fb',
+        'surface-card': '#ffffff',
+        'border-light': '#eaedf1',
       },
       boxShadow: {
-        'blue-glow': '0 0 20px rgba(59, 130, 246, 0.25)',
-        'blue-glow-sm': '0 0 10px rgba(59, 130, 246, 0.2)',
-        'green-glow-sm': '0 0 12px rgba(34, 197, 94, 0.2)',
-        'orange-glow-sm': '0 0 12px rgba(249, 115, 22, 0.2)',
+        'soft-sm': '0 2px 8px -1px rgba(0, 0, 0, 0.04), 0 1px 4px -1px rgba(0, 0, 0, 0.02)',
+        'soft': '0 8px 30px -4px rgba(0, 0, 0, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.02)',
+        'soft-lg': '0 20px 40px -10px rgba(0, 0, 0, 0.07), 0 4px 12px -2px rgba(0, 0, 0, 0.03)',
+        'float': '0 12px 32px -4px rgba(0, 0, 0, 0.08)',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        sans: ['"Plus Jakarta Sans"', 'Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
       },
     },
   },

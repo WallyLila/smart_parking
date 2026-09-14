@@ -1,0 +1,13 @@
+Act as an expert frontend developer. I want to restyle my existing code to match the UI and layout of the ref.PNG perfectly, BUT I need to keep all my existing functionality intact.
+
+**CRITICAL RULES (MUST FOLLOW):**
+1. **PRESERVE ALL LOGIC:** DO NOT change, remove, or rename any variables, state (e.g., useState), hooks, functions, API calls, or data fetching logic.
+2. **PRESERVE EVENT HANDLERS:** Keep all `onClick`, `onChange`, and other data bindings exactly where they logically belong.
+3. **ONLY CHANGE STYLING & STRUCTURE:** You are only allowed to modify Tailwind CSS classes, inline styles, and the HTML/DOM structure (adding/moving `div`, `span`, `section` tags) to achieve the exact layout and visual design of the attached image.
+
+**The Target Design Vibe (Based on the image):**
+- **Theme:** Clean, minimalist, premium light mode (Apple-like aesthetic).
+- **Colors:** Pure white cards on a very soft off-white/light gray background (e.g., bg-neutral-50). Primary text is dark gray/black.
+- **Shapes:** Generous border radius (rounded-2xl or rounded-3xl for containers, rounded-full for buttons).
+- **Shadows:** Very soft, diffuse shadows for floating elements to create depth.
+- **Typography:** Modern, clean sans-serif.

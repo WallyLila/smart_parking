@@ -4,12 +4,17 @@ import { deviceList } from '../data/mockData';
 
 export const DeviceList = () => {
   return (
-    <div className="bg-neutral-800 border border-neutral-700/60 rounded-3xl p-6 shadow-lg shadow-black/20 space-y-4">
-      <h3 className="text-base font-semibold text-white tracking-tight">
-        Detail Device
-      </h3>
+    <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 rounded-3xl p-6 sm:p-8 shadow-soft dark:shadow-none space-y-4 transition-colors duration-200">
+      <div className="flex items-center justify-between">
+        <h3 className="text-base sm:text-lg font-bold text-neutral-900 dark:text-white tracking-tight transition-colors">
+          Detail Device
+        </h3>
+        <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">
+          Telemetry
+        </span>
+      </div>
 
-      <div className="divide-y divide-neutral-700/50">
+      <div className="divide-y divide-neutral-100 dark:divide-neutral-800 transition-colors">
         {deviceList.map((device) => {
           const isEsp = device.name.includes('ESP32');
 
@@ -20,7 +25,7 @@ export const DeviceList = () => {
             >
               {/* Device Icon & Info */}
               <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-full bg-blue-600/20 border border-blue-500/30 flex items-center justify-center shrink-0 text-blue-500 shadow-blue-glow-sm">
+                <div className="w-11 h-11 rounded-2xl bg-[#f8f9fb] dark:bg-neutral-800 border border-neutral-200/70 dark:border-neutral-700 flex items-center justify-center shrink-0 text-neutral-800 dark:text-neutral-200 shadow-soft-sm transition-colors">
                   {isEsp ? (
                     <Cpu className="w-5 h-5" />
                   ) : (
@@ -28,12 +33,12 @@ export const DeviceList = () => {
                   )}
                 </div>
                 <div>
-                  <h4 className="text-sm font-semibold text-white">
+                  <h4 className="text-sm font-bold text-neutral-900 dark:text-white transition-colors">
                     {device.name}
                   </h4>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
-                    <span className="text-xs font-medium text-emerald-400">
+                    <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                       {device.status}
                     </span>
                   </div>
@@ -43,14 +48,14 @@ export const DeviceList = () => {
               {/* Updates Count & Last Update */}
               <div className="flex items-center gap-6 self-end sm:self-auto text-right">
                 <div>
-                  <span className="text-xs text-neutral-400 block">Updates</span>
-                  <span className="text-sm font-bold text-white font-mono mt-0.5 block">
+                  <span className="text-[11px] font-semibold text-neutral-400 block uppercase tracking-wider">Updates</span>
+                  <span className="text-sm font-bold text-neutral-900 dark:text-white font-mono mt-0.5 block transition-colors">
                     {device.updates}
                   </span>
                 </div>
                 <div>
-                  <span className="text-xs text-neutral-400 block">Last update</span>
-                  <span className="text-xs text-neutral-300 font-medium mt-0.5 block">
+                  <span className="text-[11px] font-semibold text-neutral-400 block uppercase tracking-wider">Last update</span>
+                  <span className="text-xs text-neutral-600 dark:text-neutral-400 font-medium mt-0.5 block transition-colors">
                     {device.lastUpdate}
                   </span>
                 </div>

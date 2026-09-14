@@ -3,16 +3,18 @@ import { Header } from '../components/Header';
 import { UsageChart } from '../components/UsageChart';
 import { DeviceList } from '../components/DeviceList';
 
-export const Usage = ({ activeTab, onSelectTab }) => {
+export const Usage = ({ activeTab, onSelectTab, darkMode, onToggleDarkMode }) => {
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <Header
-        title="Usage"
-        subtitle="See parking activity and sensor reports here"
+        title="Usage & Telemetry"
+        subtitle="Comprehensive sensor activity, occupancy trends, and hardware telemetry"
         showStatus={false}
         activeTab={activeTab}
         onSelectTab={onSelectTab}
+        darkMode={darkMode}
+        onToggleDarkMode={onToggleDarkMode}
       />
 
       {/* Responsive Grid for Usage: Side by side on large desktop, or stacked */}
