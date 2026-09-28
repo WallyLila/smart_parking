@@ -56,7 +56,7 @@ E:/smart_parking/
 │   ├── pages/
 │   │   ├── Dashboard.jsx           # หน้าหลัก (View 1): จัดวาง Multi-column พอดีกับหน้าจอคอมพิวเตอร์
 │   │   ├── Usage.jsx               # หน้าสถิติ (View 2): ดูกราฟแนวโน้มและรายละเอียดอุปกรณ์ (ตามแนวทางแบบที่ 2)
-│   │   └── Account.jsx             # หน้าระบบ (View 3): ข้อมูลระบบและการตั้งค่า Toggle + สถานะ Supabase
+│   │   └── Account.jsx             # หน้าระบบ (View 3): System Information สดตาม Watchdog (ESP32, Sensors, Slots, State, Supabase, AI Assistant) + Settings
 │   ├── services/
 │   │   ├── supabase.js             # Supabase Client Init พร้อมระบบ Auto-Sanitize URL ป้องกันบั๊ก /rest/v1/
 │   │   ├── parkingService.js       # ฟังก์ชันดึงข้อมูล ซิงค์สถานะ และ Realtime Subscriptions
@@ -143,6 +143,7 @@ E:/smart_parking/
   - **Header:** แสดง Badge `Hardware Live` (ไฟเขียว) เมื่อบอร์ดต่ออยู่ และ `ESP32 Offline` (ไฟแดง) เมื่อขาดการเชื่อมต่อ
   - **System Status (Dashboard):** กล่อง Diagnostic 4 ช่องแสดงสถานะ `Online` / `Offline` / `Paused` พร้อมสีไฟตามสถานะจริง
   - **Hardware Telemetry (Usage):** ตารางอุปกรณ์ `DeviceList` แสดงสถานะของ ESP32 และเซนเซอร์ทั้งสองช่องตามผลตรวจจับจริงของ Watchdog ไม่มีการค้างค่าหลอก
+  - **Account (System Information):** กริด 6 บล็อกแสดงสเปกระบบสดตาม Watchdog (ESP32, HC-SR04, ช่องจอดว่าง/ไม่ว่าง, Watchdog Health, Supabase Realtime, และสถานะโมเดล Local AI)
 
 ---
 

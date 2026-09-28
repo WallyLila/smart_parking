@@ -317,6 +317,9 @@ export const App = () => {
 
         {activeTab === 'account' && (
           <Account
+            slots={slots}
+            systemStatus={systemStatus}
+            isHardwareOnline={isHardwareOnline}
             activeTab={activeTab}
             onSelectTab={setActiveTab}
             darkMode={darkMode}
