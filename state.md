@@ -1,8 +1,10 @@
 # สถานะล่าสุดของโปรเจกต์ (Project State)
 
-**บันทึกเมื่อเวลา:** 21 กันยายน 2026 เวลา 23:25:00 น. (+07:00)  
+**บันทึกเมื่อเวลา:** 29 กันยายน 2026 เวลา 02:15:00 น. (+07:00)  
 **ชื่อโปรเจกต์:** Smart Parking IoT Dashboard (`smart-parking-iot`)  
 **โฟลเดอร์โปรเจกต์:** `E:\smart_parking`  
+**Git Branch ล่าสุด:** `feature/add_ai`  
+**สถานะ Commit:** `final`  
 **แหล่งอ้างอิงหลัก (Source of Truth):** [parking.txt](file:///E:/smart_parking/parking.txt) และแบบอ้างอิงดีไซน์ [ref/ref.png](file:///E:/smart_parking/ref/ref.png) ตามข้อกำหนดใน [ref/ref.txt](file:///E:/smart_parking/ref/ref.txt)
 
 ---
@@ -12,18 +14,22 @@
 1. **Frontend Web Dashboard:** พัฒนาด้วย React 19 + Vite + Tailwind CSS สไตล์ Apple-like Minimalist Light Mode และรองรับ Dark Mode เต็มรูปแบบ
 2. **Backend & Realtime Database:** ขับเคลื่อนด้วย [Supabase](https://supabase.com/) (PostgreSQL) ผ่านระบบ Realtime WebSocket ช่วยให้อัปเดตสถานะช่องจอดทันทีโดยไม่ต้องรีเฟรชหน้าจอ
 3. **IoT Controller:** ซอร์สโค้ดสำหรับ ESP32 รองรับเซนเซอร์วัดระยะ Ultrasonic (HC-SR04) และไฟ LED แสดงสถานะประจำช่องจอด
+4. **Local AI Assistant (100% On-Device):** ผู้ช่วยสั่งการฮาร์ดแวร์ด้วยเสียงและข้อความ ทำงานบนเครื่องของผู้ใช้ 100% ผ่าน **Ollama** (`deepseek-r1:1.5b` หรือโมเดลอื่นๆ) พร้อมระบบ **In-Browser Local NLP Engine** สำรองทันทีเมื่อไม่มี Ollama โดยไม่ต้องพึ่งพาคลาวด์ API ภายนอก
 
 ---
 
 ## 2. ข้อมูลทางเทคนิคและสภาพแวดล้อม (Tech Stack & Environment)
 - **Frontend Framework:** React 19
-- **Bundler / Build Tool:** Vite 6.4.3
+- **Bundler / Build Tool:** Vite 6.4.3 (พร้อม Vite Proxy `/ollama` ไปยัง `http://127.0.0.1:11434` แก้ปัญหา CORS ในเบราว์เซอร์)
 - **CSS Framework:** Tailwind CSS 3.4 + PostCSS
 - **Icon Library:** Lucide React
 - **Backend / Database:** Supabase (`@supabase/supabase-js` v2.97.0)
   - PostgreSQL Table: `parking_slots`, `parking_activities`
   - Realtime Replication: Postgres Changes Broadcast ผ่าน WebSocket
 - **IoT Firmware:** Arduino C++ (ESP32 Dev Module)
+- **AI Core:**
+  - **Local LLM Engine:** Ollama (`http://localhost:11434`), แนะนำโมเดล `deepseek-r1:1.5b` หรือ `qwen2.5:3b`
+  - **Local Rule-based NLP Engine:** รันตรงในเบราว์เซอร์ 0-latency ไร้ข้อผิดพลาด ตอบสนองภาษาไทยและอังกฤษ
 - **Local Dev Server:** พอร์ต 3000 (`http://localhost:3000` และ `http://192.168.1.176:3000`)
 
 ---
@@ -46,15 +52,15 @@ E:/smart_parking/
 │   │   ├── DeviceList.jsx          # รายการอุปกรณ์ฮาร์ดแวร์ Telemetry สดตามสถานะบอร์ดและเซนเซอร์
 │   │   ├── ActivityTimeline.jsx    # ไทม์ไลน์ประวัติรถเข้า-ออก พร้อมค้นหา ฟิลเตอร์ คำนวณเวลาจอด และ Export CSV
 │   │   ├── Toggle.jsx              # สวิตช์ Toggle UI สวยงามสำหรับสลับสถานะ
-│   │   └── AiAssistant.jsx         # Floating Chat Assistant พร้อมระบบสั่งการด้วยเสียงและควบคุมฮาร์ดแวร์
+│   │   └── AiAssistant.jsx         # Floating Chat Assistant "AI Assistant" สั่งการฮาร์ดแวร์ด้วยเสียงและโมเดล Local AI
 │   ├── pages/
 │   │   ├── Dashboard.jsx           # หน้าหลัก (View 1): จัดวาง Multi-column พอดีกับหน้าจอคอมพิวเตอร์
-│   │   ├── Usage.jsx               # หน้าสถิติ (View 2): ดูกราฟแนวโน้มและรายละเอียดอุปกรณ์
+│   │   ├── Usage.jsx               # หน้าสถิติ (View 2): ดูกราฟแนวโน้มและรายละเอียดอุปกรณ์ (ตามแนวทางแบบที่ 2)
 │   │   └── Account.jsx             # หน้าระบบ (View 3): ข้อมูลระบบและการตั้งค่า Toggle + สถานะ Supabase
 │   ├── services/
 │   │   ├── supabase.js             # Supabase Client Init พร้อมระบบ Auto-Sanitize URL ป้องกันบั๊ก /rest/v1/
 │   │   ├── parkingService.js       # ฟังก์ชันดึงข้อมูล ซิงค์สถานะ และ Realtime Subscriptions
-│   │   └── aiService.js            # AI Engine (Gemini Flash Tools Calling + Local Thai/English NLP)
+│   │   └── aiService.js            # Ollama Client + In-Browser Local NLP Engine (ปลอดคลาวด์ API Key 100%)
 │   ├── data/
 │   │   └── mockData.js             # ข้อมูล Mock Data สำรองเมื่อไม่ได้เชื่อมต่อฐานข้อมูล
 │   ├── App.jsx                     # จุดควบคุม State, Type-Safe ID Matching, Realtime Listeners, AI Handlers
@@ -72,7 +78,7 @@ E:/smart_parking/
 ├── index.html                      # หน้า HTML หลัก
 ├── tailwind.config.js              # กำหนดโทนสีและเงา
 ├── postcss.config.js               # การตั้งค่า PostCSS
-├── vite.config.js                  # ตั้งค่าโฮสต์ 0.0.0.0 และพอร์ต 3000
+├── vite.config.js                  # ตั้งค่าโฮสต์ 0.0.0.0, พอร์ต 3000 และ Proxy ไปยัง Ollama (/ollama -> 11434)
 ├── package.json                    # รายการ Dependencies
 ├── state.md                        # บันทึกสถานะล่าสุดของโปรเจกต์
 └── parking.txt                     # เอกสารสเปกหลัก (Single Source of Truth)
@@ -97,11 +103,9 @@ E:/smart_parking/
 - **ช่องจอด 1 (Slot 1):**
   - 🟢 **Green LED (`GPIO 16`):** ติดสว่างเมื่อสถานะเป็น `available` (ว่าง)
   - 🔴 **Red LED (`GPIO 15`):** ติดสว่างเมื่อสถานะเป็น `occupied` (ไม่ว่าง)
-  - ควบคุมผ่านฟังก์ชัน `updateSlot1StatusLEDs()`
 - **ช่องจอด 2 (Slot 2):**
   - 🟢 **Green LED (`GPIO 22`):** ติดสว่างเมื่อสถานะเป็น `available` (ว่าง)
   - 🔴 **Red LED (`GPIO 23`):** ติดสว่างเมื่อสถานะเป็น `occupied` (ไม่ว่าง)
-  - ควบคุมผ่านฟังก์ชัน `updateSlot2StatusLEDs()`
 - **การสั่งการร่วมกับปุ่มปิดไฟบนหน้าเว็บ (Web Dashboard Light Control):**
   - เมื่อ **ปิดไฟ** บนหน้าเว็บ (`slot.light == false`): ทั้งไฟส่องสว่างหลักและไฟสถานะสีเขียวกับสีแดงของช่องนั้นๆ จะดับลงทั้งหมด (`LOW`)
   - เมื่อ **เปิดไฟ** บนหน้าเว็บ (`slot.light == true`): ไฟส่องสว่างหลักจะเปิด (`HIGH`) และไฟสถานะเขียว/แดงจะกลับมาทำงานตามความว่างของช่องจอดปกติ
@@ -129,22 +133,27 @@ E:/smart_parking/
 - **สถานะ:** ใช้งานได้จริง 100% (Subscribed เรียบร้อย)
 - **การแก้ไข URL:** ใน `.env` ปรับให้เหลือเฉพาะ Root Project URL (`https://kskcwaxvwcsxzijweoah.supabase.co`) และมีระบบ Auto-Sanitize ใน `supabase.js` เพื่อตัด `/rest/v1/` หรือเครื่องหมาย `/` ส่วนเกินออกให้อัตโนมัติ
 
-### 4.6 ระบบผู้ช่วยอัจฉริยะ (AI Chat Assistant & Voice Hardware Controller)
-- **ตำแหน่ง UI:** ปุ่ม Floating Action Button สไตล์ Apple Minimalist บริเวณมุมขวาล่าง (`fixed bottom-20 md:bottom-8 right-4 md:right-8 z-50`) มีไฟเขียวแสดงสถานะความพร้อม
-- **หน้าต่างแชต (Assistant Modal):** ดีไซน์ Glassmorphism รองรับ Light / Dark Mode, Quick Prompt Chips และประวัติการสนทนา
-- **ระบบสั่งการด้วยเสียง (Voice Recognition):** รองรับ Web Speech API ภาษาไทย (`th-TH`) กดไมค์แล้วพูดสั่งการได้ทันที
-- **สมองกลแบบ Dual-Engine:**
-  1. **Google Gemini Flash API:** รองรับ Function Calling (Tools) ผ่าน REST API สามารถระบุคีย์ผ่านปุ่มตั้งค่าในหน้าต่างแชตหรือ `.env`
-  2. **Local Intelligent NLP Engine (Offline Fallback):** ทำงานได้ทันที 100% ไม่ต้องพึ่งพาระบบภายนอก ตอบสนองเร็ว แม่นยำทั้งภาษาไทยและอังกฤษ
-- **ขอบเขตคำสั่งฮาร์ดแวร์ที่รองรับ:**
-  - **ควบคุมไฟ (Parking Lights):**
-    - *"เปิดไฟช่อง 1"*, *"ปิดไฟช่อง 2"*, *"เปิด/ปิดไฟทุกช่อง"* (สั่งการไปยัง `slot.light` ใน Supabase -> ESP32 ปรับสถานะไฟจริง)
-  - **ควบคุมเซนเซอร์ Ultrasonic (HC-SR04):**
-    - *"ปิด Ultrasonic ช่อง 1"*, *"เปิด Ultrasonic ทั้งหมด"*, *"หยุดการทำงานเซนเซอร์"* (ปรับสถานะ `sensor` ใน Supabase และบอร์ด ESP32 จะพักการตรวจจับของช่องนั้นๆ)
-  - **สอบถามสถานะช่องจอด:**
-    - *"มีที่จอดว่างไหม"*, *"ช่องไหนว่างบ้าง"*, *"ระยะเซนเซอร์เท่าไหร่"*
+---
 
-### 4.7 ระบบวิเคราะห์และประวัติการเข้าจอด (Usage Analytics, Timeline & Excel/CSV Export)
+## 5. ระบบผู้ช่วยอัจฉริยะในเครื่อง (AI Assistant & Voice Controller)
+
+### 5.1 การปรับเปลี่ยนสถาปัตยกรรม AI เป็น Local 100%
+- **ยกเลิกการใช้คลาวด์ API ทั้งหมด:** ปลดภาระเรื่อง API Key, ปัญหาโมเดลหมดอายุ (เช่น Gemini 2.0/2.5 deprecation) และปัญหาเครือข่ายอินเทอร์เน็ต
+- **สถาปัตยกรรม Local Dual-Engine:**
+  1. **Ollama LLM Engine:** รันโมเดล AI ในเครื่องผ่าน Port 11434 รองรับโมเดลเช่น `deepseek-r1:1.5b`, `qwen2.5:3b`
+     - มีระบบกรองแท็ก `<think>...</think>` อัตโนมัติสำหรับโมเดลประเภท Reasoning
+     - สื่อสารผ่าน Action Tags: `[ACTION:LIGHT:1:ON]`, `[ACTION:LIGHT:ALL:OFF]`, `[ACTION:SENSOR:1:DISABLED]`, ฯลฯ
+     - ตรวจจับรายชื่อโมเดลที่ติดตั้งไว้ในเครื่องอัตโนมัติผ่าน Endpoint `/api/tags`
+  2. **In-Browser Local NLP Engine (Zero-Latency Fallback):**
+     - หากไม่ได้เปิดโปรแกรม Ollama หรือยังไม่ได้ติดตั้งโมเดล ระบบจะสลับมาประมวลผลด้วยกฎไวยากรณ์อัจฉริยะในเบราว์เซอร์ทันที ทำงานได้ 100% ไม่มีข้อผิดพลาด
+- **การแก้ปัญหา CORS:** มีการกำหนด Proxy ใน `vite.config.js` ให้เส้นทาง `/ollama` ชี้ไปยัง `http://127.0.0.1:11434` ทำให้เว็บส่งคำขอได้ลื่นไหลโดยไม่ติดข้อจำกัดด้านความปลอดภัยของเบราว์เซอร์
+- **UI & UX:**
+  - ใช้ชื่อปุ่มและหน้าต่างแชตว่า **"AI Assistant"**
+  - รองรับการสั่งการด้วยเสียงภาษาไทย (`th-TH`) ผ่าน Web Speech API
+
+---
+
+## 6. ระบบวิเคราะห์และประวัติการเข้าจอด (Usage Analytics, Timeline & Excel/CSV Export)
 - **การดึงข้อมูลจริง:** ดึงข้อมูลประวัติย้อนหลังจากตาราง `parking_activities` ใน Supabase พร้อม Realtime Listener อัปเดตทันทีเมื่อมีรถเข้าหรือออก
 - **บัตรสรุปตัวชี้วัด (KPI Cards):**
   - จำนวนรถเข้าจอดทั้งหมด (Total Parkings) และสถิติของวันนี้
@@ -159,7 +168,7 @@ E:/smart_parking/
   - ป้ายระบุช่องจอด (`Slot 01` / `Slot 02`) และป้ายสถานะ (Occupied / Available / Telemetry)
   - แสดงระยะเวลาจอดจริงของแต่ละคัน (เช่น `จอดนาน 15 นาที 4 วินาที`)
   - ระบบค้นหาด่วน (Search Box) ค้นหาตามคำ เหตุการณ์ หรือช่องจอด
-  - ระบบฟิลเตอร์แบบหลายมิติ: เลือกตามช่องจอด, เลือกตามสถานะ, และเลือกตามช่วงเวลา (วันนี้, 7 วัน, 30 วัน)
+  - ระบบฟิลเตอร์แบบหลายมิติ: เลือกตามช่องจอด, เลือกตามสถานะ, และเลือกตามช่วงเวลา
   - ระบบแบ่งหน้า (Pagination) แสดงผลครั้งละ 10 รายการเพื่อความรวดเร็ว
 - **การส่งออกข้อมูล (Export to Excel / CSV):**
   - ปุ่ม Export CSV สำหรับดาวน์โหลดข้อมูลที่กำลังกรองอยู่หรือข้อมูลทั้งหมด
@@ -167,9 +176,9 @@ E:/smart_parking/
 
 ---
 
-## 5. คู่มือและข้อกำหนดสำหรับการนำขึ้น GitHub (GitHub Guidelines)
+## 7. คู่มือและข้อกำหนดสำหรับการนำขึ้น GitHub (GitHub Guidelines)
 
-### 5.1 ไฟล์ที่ต้องอัปโหลดขึ้น GitHub (Whitelisted)
+### 7.1 ไฟล์ที่ต้องอัปโหลดขึ้น GitHub (Whitelisted)
 - โฟลเดอร์ `src/` (โค้ดเว็บทั้งหมด)
 - ไฟล์ Config: `package.json`, `package-lock.json`, `vite.config.js`, `tailwind.config.js`, `postcss.config.js`, `index.html`
 - โฟลเดอร์ `arduino/` (โค้ด ESP32 ทั้งหมด)
@@ -177,78 +186,25 @@ E:/smart_parking/
 - ไฟล์เอกสาร: `README.md`, `state.md`, `parking.txt`, โฟลเดอร์ `ref/`
 - ไฟล์ตัวอย่าง Config: `.env.example`, `.gitignore`
 
-### 5.2 ไฟล์ที่ "ห้าม" อัปโหลดขึ้น GitHub เด็ดขาด (Blacklisted)
+### 7.2 ไฟล์ที่ "ห้าม" อัปโหลดขึ้น GitHub เด็ดขาด (Blacklisted)
 1. ❌ **`node_modules/`** : ไม่ต้องอัปโหลดเพราะมีขนาดใหญ่มาก ผู้อื่นสามารถรัน `npm install` เพื่อดาวน์โหลดได้ทันที
 2. ❌ **`.env`** : **ห้ามอัปโหลดเด็ดขาด** เนื่องจากมี Supabase Project URL และ Anon Key จริง หากหลุดขึ้น Public Repo จะทำให้ฐานข้อมูลไม่ปลอดภัย
 3. ❌ **`dist/`** : โฟลเดอร์ผลลัพธ์จากการ Build ซึ่งสร้างใหม่ได้เสมอด้วยคำสั่ง `npm run build`
 
-> **หมายเหตุ:** Repository ในเครื่องได้รับการกำหนดค่า `.gitignore` และสั่ง `git rm -r --cached` เคลียร์ไฟล์ต้องห้ามข้างต้นออกจาก Git Tracking เรียบร้อยแล้ว (ไฟล์ในเครื่องยังอยู่ครบถ้วน)
-
 ---
 
-## 6. ขั้นตอนการนำโปรเจกต์ขึ้น GitHub (Step-by-Step)
-
-### วิธีการนำขึ้นครั้งแรก (Initial Push)
-
-1. **สร้าง Repository ใหม่บน GitHub:**
-   - ไปที่ [github.com/new](https://github.com/new)
-   - ตั้งชื่อ Repository: เช่น `smart-parking-iot`
-   - ตั้งค่าเป็น **Public** หรือ **Private** ตามต้องการ
-   - **ไม่ต้องติ๊ก** "Add a README file" หรือ ".gitignore"
-   - กดปุ่ม **Create repository**
-
-2. **เปิด Terminal (PowerShell) ที่โฟลเดอร์ `E:\smart_parking` แล้วรันคำสั่ง:**
+## 8. ขั้นตอนการนำโปรเจกต์ขึ้น GitHub (Step-by-Step)
 
 ```bash
-# 1. เปลี่ยนชื่อ Branch หลักให้เป็น main
-git branch -M main
-
-# 2. เชื่อมต่อไปยัง Repository ของคุณบน GitHub (แทนที่ USERNAME และ REPO_NAME ด้วยค่าจริงของคุณ)
-git remote add origin https://github.com/<USERNAME>/<REPO_NAME>.git
-
-# 3. อัปโหลดไฟล์ขึ้น GitHub
-git push -u origin main
-```
-
----
-
-### ขั้นตอนการอัปเดตโค้ดขึ้น GitHub ในครั้งถัดไป (Subsequent Updates)
-
-เมื่อมีการแก้ไขโค้ดและต้องการส่งการเปลี่ยนแปลงขึ้น GitHub:
-
-```bash
-# 1. ตรวจสอบไฟล์ที่เปลี่ยนแปลง
+# 1. ตรวจสอบสถานะไฟล์
 git status
 
 # 2. เพิ่มไฟล์ที่แก้ไขเข้าสู่ Staging
 git add .
 
-# 3. บันทึก Commit พร้อมข้อความอธิบาย
-git commit -m "feat: อธิบายสิ่งที่มีการเปลี่ยนแปลง"
+# 3. บันทึก Commit
+git commit -m "final"
 
-# 4. Push ขึ้น GitHub
+# 4. Push ขึ้น GitHub (เมื่อเชื่อมต่อ Remote เรียบร้อย)
 git push
 ```
-
----
-
-## 7. ขั้นตอนสำหรับผู้ที่จะนำโปรเจกต์ไปรันต่อ (For Other Developers)
-
-1. Clone โปรเจกต์ลงเครื่อง:
-   ```bash
-   git clone https://github.com/<USERNAME>/<REPO_NAME>.git
-   cd <REPO_NAME>
-   ```
-2. ติดตั้ง Dependencies:
-   ```bash
-   npm install
-   ```
-3. สร้างไฟล์ `.env` จาก `.env.example`:
-   ```bash
-   cp .env.example .env
-   ```
-4. ใส่ URL และ Anon Key ของ Supabase ใน `.env`
-5. เริ่มรันเว็บ:
-   ```bash
-   npm run dev
-   ```

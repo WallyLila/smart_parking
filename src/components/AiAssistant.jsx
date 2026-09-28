@@ -10,18 +10,28 @@ import {
   Lightbulb,
   Radio,
   CheckCircle2,
-  KeyRound,
-  RotateCcw,
+  Cpu,
+  RefreshCw,
+  AlertCircle,
+  ExternalLink,
+  Terminal,
+  Server,
 } from 'lucide-react';
 import {
   processAiMessage,
-  getGeminiApiKey,
-  setGeminiApiKey,
+  getOllamaHost,
+  setOllamaHost,
+  getOllamaModel,
+  setOllamaModel,
+  checkOllamaConnection,
+  DEFAULT_OLLAMA_HOST,
+  DEFAULT_OLLAMA_MODEL,
 } from '../services/aiService';
 
 export const AiAssistant = ({
   slots = [],
   systemStatus = [],
+  activities = [],
   onSetLight,
   onSetSensor,
   darkMode = false,
@@ -31,7 +41,12 @@ export const AiAssistant = ({
   const [isTyping, setIsTyping] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [apiKeyInput, setApiKeyInput] = useState(getGeminiApiKey());
+  const [hostInput, setHostInput] = useState(getOllamaHost());
+  const [modelInput, setModelInput] = useState(getOllamaModel());
+  const [isTesting, setIsTesting] = useState(false);
+  const [testResult, setTestResult] = useState(null);
+  const [installedModels, setInstalledModels] = useState([]);
+  const [ollamaOnline, setOllamaOnline] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
 
   const messagesEndRef = useRef(null);
@@ -42,11 +57,27 @@ export const AiAssistant = ({
     {
       id: 1,
       sender: 'ai',
-      text: `👋 **สวัสดีครับ! ผมคือ Smart Parking AI Assistant**\n\nผมพร้อมช่วยควบคุมอุปกรณ์ฮาร์ดแวร์ IoT ให้คุณ:\n- 💡 **เปิด/ปิดไฟส่องสว่าง:** *"เปิดไฟช่อง 1"*, *"ปิดไฟทุกช่อง"*\n- 📡 **เปิด/ปิดเซนเซอร์ Ultrasonic:** *"ปิด Ultrasonic ช่อง 1"*, *"เปิด Ultrasonic ทั้งหมด"*\n- 🚗 **เช็คความว่าง:** *"มีที่จอดว่างไหม"*\n\nลองเลือกคำสั่งด่วนด้านล่าง หรือพิมพ์/กดปุ่มไมค์สั่งด้วยเสียงได้เลยครับ!`,
+      text: `👋 **สวัสดีครับ! ผมคือ Smart Parking AI Assistant**\n\nผมพร้อมช่วยควบคุมอุปกรณ์ฮาร์ดแวร์ IoT ให้คุณ โดยทำงานบนคอมพิวเตอร์ของคุณเอง 100% ไม่ต้องต่อเน็ต:\n- 💡 **เปิด/ปิดไฟส่องสว่าง:** *"เปิดไฟช่อง 1"*, *"ปิดไฟทุกช่อง"*\n- 📡 **เปิด/ปิดเซนเซอร์ Ultrasonic:** *"ปิด Ultrasonic ช่อง 1"*, *"เปิด Ultrasonic ทั้งหมด"*\n- 🚗 **เช็คความว่าง:** *"มีที่จอดว่างไหม"*\n- 📋 **เช็คสถิติ & ประวัติ:** *"มีรถเข้ากี่คัน"*, *"ประวัติล่าสุด"*\n\nสามารถพิมพ์สั่งงานหรือกดปุ่มไมค์เพื่อสั่งด้วยเสียงได้เลยครับ!`,
       time: 'Just now',
       actions: [],
     },
   ]);
+
+  // Check Ollama connection on mount
+  useEffect(() => {
+    checkOllamaConnection(getOllamaHost()).then((res) => {
+      const hasModels = res.success && res.models && res.models.length > 0;
+      setOllamaOnline(hasModels);
+      if (hasModels) {
+        setInstalledModels(res.models);
+        const currentSaved = getOllamaModel();
+        if (!res.models.includes(currentSaved)) {
+          setModelInput(res.models[0]);
+          setOllamaModel(res.models[0]);
+        }
+      }
+    });
+  }, []);
 
   // Check Web Speech API support
   useEffect(() => {
@@ -67,7 +98,6 @@ export const AiAssistant = ({
         const transcript = event.results[0][0].transcript;
         if (transcript) {
           setInput(transcript);
-          // Automatically process voice command
           handleSendMessage(transcript);
         }
       };
@@ -143,7 +173,7 @@ export const AiAssistant = ({
     try {
       const response = await processAiMessage(
         userPrompt,
-        { slots, systemStatus },
+        { slots, systemStatus, activities },
         handleExecuteAction
       );
 
@@ -172,8 +202,34 @@ export const AiAssistant = ({
     }
   };
 
-  const handleSaveApiKey = () => {
-    setGeminiApiKey(apiKeyInput);
+  // Test Ollama connection
+  const handleTestOllama = async () => {
+    setIsTesting(true);
+    setTestResult(null);
+    try {
+      const result = await checkOllamaConnection(hostInput);
+      setTestResult(result);
+      const hasModels = result.success && result.models && result.models.length > 0;
+      setOllamaOnline(hasModels);
+      if (hasModels) {
+        setInstalledModels(result.models);
+        if (!result.models.includes(modelInput)) {
+          setModelInput(result.models[0]);
+          setOllamaModel(result.models[0]);
+        }
+      }
+    } catch (err) {
+      setTestResult({ success: false, error: err.message });
+      setOllamaOnline(false);
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
+  // Save Ollama settings
+  const handleSaveSettings = () => {
+    setOllamaHost(hostInput);
+    setOllamaModel(modelInput);
     setShowSettings(false);
   };
 
@@ -183,7 +239,13 @@ export const AiAssistant = ({
     { label: '📡 ปิด Ultrasonic 1', prompt: 'ปิด Ultrasonic ช่อง 1' },
     { label: '📡 เปิด Ultrasonic ทั้งหมด', prompt: 'เปิด Ultrasonic ทั้งหมด' },
     { label: '🚗 เช็คช่องจอดว่าง', prompt: 'มีที่จอดว่างไหม' },
+    { label: '📋 รถเข้ากี่คันแล้ว', prompt: 'วันนี้มีรถเข้ากี่คัน' },
   ];
+
+  const currentModel = getOllamaModel();
+  const activeLabel = ollamaOnline
+    ? `Ollama: ${currentModel}`
+    : 'Local Smart Engine (ในเครื่อง)';
 
   return (
     <>
@@ -208,36 +270,44 @@ export const AiAssistant = ({
       {/* 2. CHAT ASSISTANT MODAL WINDOW */}
       {isOpen && (
         <div
-          className="fixed bottom-20 md:bottom-8 right-4 md:right-8 z-50 w-[calc(100vw-2rem)] sm:w-[420px] h-[550px] max-h-[82vh] bg-white/95 dark:bg-neutral-900/95 backdrop-blur-2xl border border-neutral-200/90 dark:border-neutral-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden transition-all duration-300 animate-in fade-in zoom-in-95"
+          className="fixed bottom-20 md:bottom-8 right-4 md:right-8 z-50 w-[calc(100vw-2rem)] sm:w-[440px] h-[580px] max-h-[85vh] bg-white/95 dark:bg-neutral-900/95 backdrop-blur-2xl border border-neutral-200/90 dark:border-neutral-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden transition-all duration-300 animate-in fade-in zoom-in-95"
         >
           {/* Header */}
           <div className="px-5 py-3.5 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between bg-neutral-50/70 dark:bg-neutral-850/60">
             <div className="flex items-center gap-3">
               <div className="relative w-9 h-9 rounded-2xl bg-gradient-to-tr from-neutral-900 to-neutral-700 dark:from-neutral-100 dark:to-neutral-300 flex items-center justify-center text-white dark:text-neutral-900 shadow-soft-sm">
-                <Bot className="w-5 h-5" />
-                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-neutral-900"></span>
+                <Cpu className="w-5 h-5" />
+                <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ${ollamaOnline ? 'bg-emerald-500' : 'bg-blue-500'} ring-2 ring-white dark:ring-neutral-900`}></span>
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
                   <h3 className="text-sm font-bold text-neutral-900 dark:text-white leading-tight">
-                    Smart Assistant
+                    AI Assistant
                   </h3>
-                  <span className="px-1.5 py-0.2 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-wider border border-emerald-200/60 dark:border-emerald-800/60">
-                    IoT Online
+                  <span className="px-1.5 py-0.2 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 text-[10px] font-bold uppercase tracking-wider border border-blue-200/60 dark:border-blue-800/60">
+                    100% Local
                   </span>
                 </div>
-                <p className="text-[11px] text-neutral-400 font-medium">
-                  {getGeminiApiKey() ? 'Gemini AI Active' : 'Intelligent IoT Controller'}
-                </p>
+                <div className="flex items-center gap-1 text-[11px] text-neutral-500 dark:text-neutral-400 font-medium">
+                  <span className={`w-1.5 h-1.5 rounded-full ${ollamaOnline ? 'bg-emerald-500' : 'bg-blue-500'}`}></span>
+                  <span>{activeLabel}</span>
+                </div>
               </div>
             </div>
 
             <div className="flex items-center gap-1">
               <button
                 type="button"
-                onClick={() => setShowSettings(!showSettings)}
-                className="p-2 rounded-xl text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-                title="AI Settings"
+                onClick={() => {
+                  setShowSettings(!showSettings);
+                  setTestResult(null);
+                }}
+                className={`p-2 rounded-xl transition-colors ${
+                  showSettings
+                    ? 'bg-neutral-200 dark:bg-neutral-700 text-neutral-900 dark:text-white'
+                    : 'text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800'
+                }`}
+                title="Ollama Settings"
               >
                 <Settings className="w-4 h-4" />
               </button>
@@ -252,13 +322,13 @@ export const AiAssistant = ({
             </div>
           </div>
 
-          {/* Settings Sub-Panel (Gemini API Key) */}
+          {/* Settings Sub-Panel (Ollama Configuration) */}
           {showSettings && (
-            <div className="p-4 bg-neutral-50 dark:bg-neutral-800/80 border-b border-neutral-200/60 dark:border-neutral-700 space-y-2.5 transition-all text-xs">
+            <div className="p-4 bg-neutral-50 dark:bg-neutral-850 border-b border-neutral-200/60 dark:border-neutral-700 space-y-3 transition-all text-xs overflow-y-auto max-h-[340px]">
               <div className="flex items-center justify-between font-bold text-neutral-800 dark:text-neutral-200">
                 <span className="flex items-center gap-1.5">
-                  <KeyRound className="w-3.5 h-3.5 text-amber-500" />
-                  Google Gemini API Key (Optional)
+                  <Server className="w-3.5 h-3.5 text-blue-500" />
+                  การตั้งค่า Ollama (Local AI ในเครื่อง)
                 </span>
                 <button
                   type="button"
@@ -268,24 +338,150 @@ export const AiAssistant = ({
                   ปิด
                 </button>
               </div>
-              <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-relaxed">
-                หากไม่ใส่คีย์ ระบบจะใช้ Local NLP Engine ในการควบคุมฮาร์ดแวร์ได้ทันที หากต้องการใช้ LLM ความฉลาดสูง ใส่คีย์ Gemini ได้ที่นี่ครับ
-              </p>
-              <div className="flex gap-2">
+
+              {/* Status info */}
+              <div className="p-2.5 rounded-xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/70 dark:border-blue-900/50 text-[11px] text-blue-900 dark:text-blue-300 space-y-1">
+                <p className="font-bold flex items-center gap-1">
+                  💻 รัน AI บนคอมพิวเตอร์ของคุณเอง 100%
+                </p>
+                <p className="text-[10px] text-blue-700 dark:text-blue-400 leading-relaxed">
+                  ไม่ต้องใช้ API Key จากค่ายใดๆ, ฟรีตลอดชีพ, ข้อมูลไม่หลุดออกนอกเครื่อง และไม่ต้องใช้อินเทอร์เน็ต
+                </p>
+              </div>
+
+              {/* Ollama Endpoint */}
+              <div className="space-y-1">
+                <label className="text-[11px] font-semibold text-neutral-600 dark:text-neutral-400">
+                  Ollama Host URL:
+                </label>
                 <input
-                  type="password"
-                  value={apiKeyInput}
-                  onChange={(e) => setApiKeyInput(e.target.value)}
-                  placeholder="AIzaSy..."
-                  className="flex-1 px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white text-xs outline-none focus:ring-2 focus:ring-neutral-400 font-mono"
+                  type="text"
+                  value={hostInput}
+                  onChange={(e) => setHostInput(e.target.value)}
+                  placeholder="http://localhost:11434"
+                  className="w-full px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white text-xs outline-none focus:ring-2 focus:ring-neutral-400 font-mono"
                 />
+              </div>
+
+              {/* Model Selection */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-semibold text-neutral-600 dark:text-neutral-400">
+                    ชื่อโมเดล Ollama:
+                  </label>
+                  <a
+                    href="https://ollama.com/library"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[10px] text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-0.5"
+                  >
+                    ดูโมเดลทั้งหมด <ExternalLink className="w-2.5 h-2.5" />
+                  </a>
+                </div>
+                {installedModels.length > 0 ? (
+                  <select
+                    value={modelInput}
+                    onChange={(e) => setModelInput(e.target.value)}
+                    className="w-full px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white text-xs outline-none focus:ring-2 focus:ring-neutral-400"
+                  >
+                    {installedModels.map((m, idx) => (
+                      <option key={idx} value={m}>
+                        {m}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    value={modelInput}
+                    onChange={(e) => setModelInput(e.target.value)}
+                    placeholder="deepseek-r1:1.5b หรือ qwen2.5:3b"
+                    className="w-full px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white text-xs outline-none focus:ring-2 focus:ring-neutral-400 font-mono"
+                  />
+                )}
+                <div className="flex flex-wrap gap-1 pt-0.5">
+                  {['deepseek-r1:1.5b', 'qwen2.5:3b', 'llama3.2:1b'].map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setModelInput(m)}
+                      className={`px-2 py-0.5 rounded-md text-[10px] border transition-colors ${
+                        modelInput === m
+                          ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 border-transparent font-bold'
+                          : 'bg-white dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700'
+                      }`}
+                    >
+                      {m}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Action Buttons: Test & Save */}
+              <div className="flex items-center gap-2 pt-1">
                 <button
                   type="button"
-                  onClick={handleSaveApiKey}
-                  className="px-3 py-1.5 rounded-xl bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 font-bold hover:opacity-90 transition-opacity"
+                  onClick={handleTestOllama}
+                  disabled={isTesting}
+                  className="flex-1 py-1.5 px-3 rounded-xl bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-700 dark:hover:bg-neutral-650 text-neutral-800 dark:text-neutral-200 font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
+                >
+                  {isTesting ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      กำลังตรวจสอบ...
+                    </>
+                  ) : (
+                    '🔍 ตรวจสอบการเชื่อมต่อ Ollama'
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleSaveSettings}
+                  className="py-1.5 px-4 rounded-xl bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-neutral-900 font-bold text-xs transition-opacity shadow-soft-sm"
                 >
                   บันทึก
                 </button>
+              </div>
+
+              {/* Connection Status Box */}
+              {testResult && (
+                <div
+                  className={`p-2.5 rounded-xl text-xs flex items-start gap-2 border animate-in fade-in duration-200 ${
+                    testResult.success
+                      ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+                      : 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+                  }`}
+                >
+                  {testResult.success ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                  )}
+                  <div className="space-y-0.5">
+                    <p className="font-bold">
+                      {testResult.success ? 'เชื่อมต่อ Ollama สำเร็จ!' : 'ยังไม่ได้เปิด Ollama ในเครื่อง'}
+                    </p>
+                    <p className="text-[11px] leading-relaxed">
+                      {testResult.success
+                        ? `พบโมเดลในเครื่อง: ${testResult.models.join(', ') || modelInput}`
+                        : 'ระบบจะสลับไปใช้ Local Smart Engine ภายในเว็บอัตโนมัติ ซึ่งสามารถสั่งเปิด/ปิดไฟและเซนเซอร์ได้ 100%'}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* 3-Step Setup Guide */}
+              <div className="p-2.5 rounded-xl bg-neutral-100/70 dark:bg-neutral-800/80 border border-neutral-200/60 dark:border-neutral-700/60 space-y-1.5">
+                <p className="font-bold text-neutral-800 dark:text-neutral-200 flex items-center gap-1.5 text-[11px]">
+                  <Terminal className="w-3.5 h-3.5 text-emerald-600" />
+                  วิธีติดตั้ง & เปิดใช้งาน Ollama ในเครื่อง:
+                </p>
+                <ol className="list-decimal list-inside space-y-1 text-[10px] text-neutral-600 dark:text-neutral-400 leading-relaxed font-mono">
+                  <li>ดาวน์โหลดและติดตั้ง: <a href="https://ollama.com" target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">ollama.com</a></li>
+                  <li>เปิด PowerShell แล้วรันคำสั่ง: <br/><code className="text-emerald-600 dark:text-emerald-400 font-bold bg-white dark:bg-neutral-900 px-1 py-0.5 rounded">ollama run deepseek-r1:1.5b</code></li>
+                  <li>กลับมากดปุ่ม "ตรวจสอบการเชื่อมต่อ" ด้านบน</li>
+                </ol>
               </div>
             </div>
           )}
@@ -399,7 +595,7 @@ export const AiAssistant = ({
                 placeholder={
                   isListening
                     ? 'กำลังฟังเสียงพูดของคุณ...'
-                    : "พิมพ์คำสั่ง เช่น 'เปิดไฟช่อง 1'..."
+                    : "พิมพ์คำสั่ง เช่น 'เปิดไฟช่อง 1' หรือ 'มีรถเข้ากี่คัน'..."
                 }
                 disabled={isTyping}
                 className="flex-1 px-4 py-2.5 rounded-2xl bg-neutral-100/80 dark:bg-neutral-800 border border-neutral-200/70 dark:border-neutral-700 text-neutral-900 dark:text-white placeholder-neutral-400 text-xs sm:text-sm outline-none focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-600 transition-all"

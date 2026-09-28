@@ -233,6 +233,7 @@ export const App = () => {
       <AiAssistant
         slots={slots}
         systemStatus={systemStatus}
+        activities={activities}
         onSetLight={handleSetLight}
         onSetSensor={handleSetSensor}
         darkMode={darkMode}
