@@ -1,0 +1,33 @@
+# Dependencies (ห้ามอัปโหลดเด็ดขาด)
+node_modules/
+/.pnp
+.pnp.js
+
+# Production build output
+dist/
+dist-ssr/
+*.local
+
+# Environment variables & Secrets (ห้ามอัปโหลดเด็ดขาด เพราะมี API Keys)
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor & OS files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db
