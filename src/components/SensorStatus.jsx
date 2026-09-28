@@ -10,15 +10,23 @@ export const SensorStatus = ({ name, status, isLastUpdate = false }) => {
         {!isLastUpdate && (
           <span
             className={`w-2 h-2 rounded-full inline-block ${
-              status?.toLowerCase() === 'disabled' || status?.toLowerCase() === 'offline'
+              status?.toLowerCase() === 'offline'
+                ? 'bg-rose-500 ring-2 ring-rose-300 dark:ring-rose-900 animate-pulse'
+                : status?.toLowerCase() === 'disabled' || status?.toLowerCase() === 'paused'
                 ? 'bg-amber-500 ring-2 ring-amber-200 dark:ring-amber-950'
-                : 'bg-emerald-500'
+                : 'bg-emerald-500 ring-2 ring-emerald-200 dark:ring-emerald-950'
             }`}
           />
         )}
         <span
           className={`text-xs font-bold ${
-            isLastUpdate ? 'text-neutral-600 dark:text-neutral-300 font-mono' : 'text-neutral-900 dark:text-white'
+            isLastUpdate
+              ? 'text-neutral-600 dark:text-neutral-300 font-mono'
+              : status?.toLowerCase() === 'offline'
+              ? 'text-rose-600 dark:text-rose-400'
+              : status?.toLowerCase() === 'disabled' || status?.toLowerCase() === 'paused'
+              ? 'text-amber-600 dark:text-amber-400'
+              : 'text-neutral-900 dark:text-white'
           }`}
         >
           {status}

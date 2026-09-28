@@ -14,7 +14,7 @@ const formatRelativeTime = (isoString) => {
   return date.toLocaleDateString('th-TH');
 };
 
-export const DeviceList = ({ slots = [], activities = [] }) => {
+export const DeviceList = ({ slots = [], activities = [], isHardwareOnline = true }) => {
   // Build real devices from slots & activities
   const devices = React.useMemo(() => {
     if (!slots || slots.length === 0) {
@@ -29,38 +29,54 @@ export const DeviceList = ({ slots = [], activities = [] }) => {
 
     const slot1LastTime = slot1Acts[0]?.created_at || slot1?.updated_at;
     const slot2LastTime = slot2Acts[0]?.created_at || slot2?.updated_at;
-    const espLastTime = activities[0]?.created_at;
+    const espLastTime = activities[0]?.created_at || slot1?.updated_at || slot2?.updated_at;
+
+    const s1Status = !isHardwareOnline
+      ? 'Offline'
+      : slot1?.sensor === 'disabled'
+      ? 'Paused'
+      : 'Online';
+
+    const s2Status = !isHardwareOnline
+      ? 'Offline'
+      : slot2?.sensor === 'disabled'
+      ? 'Paused'
+      : 'Online';
 
     return [
       {
         id: 1,
         name: slot1?.name || 'Ultrasonic Sensor 01',
-        status: slot1?.sensor === 'disabled' ? 'Paused' : 'Online',
-        isOnline: slot1?.sensor !== 'disabled',
+        status: s1Status,
+        isOnline: isHardwareOnline && slot1?.sensor !== 'disabled',
         updates: slot1Acts.length ? slot1Acts.length.toLocaleString() : '1,248',
         lastUpdate: formatRelativeTime(slot1LastTime),
-        details: `${slot1?.distance || 185} cm (${slot1?.status || 'available'})`,
+        details: isHardwareOnline
+          ? `${slot1?.distance ?? 185} cm (${slot1?.status || 'available'})`
+          : 'No signal (Offline)',
       },
       {
         id: 2,
         name: slot2?.name || 'Ultrasonic Sensor 02',
-        status: slot2?.sensor === 'disabled' ? 'Paused' : 'Online',
-        isOnline: slot2?.sensor !== 'disabled',
+        status: s2Status,
+        isOnline: isHardwareOnline && slot2?.sensor !== 'disabled',
         updates: slot2Acts.length ? slot2Acts.length.toLocaleString() : '1,192',
         lastUpdate: formatRelativeTime(slot2LastTime),
-        details: `${slot2?.distance || 42} cm (${slot2?.status || 'occupied'})`,
+        details: isHardwareOnline
+          ? `${slot2?.distance ?? 42} cm (${slot2?.status || 'occupied'})`
+          : 'No signal (Offline)',
       },
       {
         id: 3,
         name: 'ESP32 Controller',
-        status: 'Online',
-        isOnline: true,
+        status: isHardwareOnline ? 'Online' : 'Offline',
+        isOnline: isHardwareOnline,
         updates: activities.length ? activities.length.toLocaleString() : '3,420',
         lastUpdate: formatRelativeTime(espLastTime),
-        details: 'ESP-WROOM-32 DevKit',
+        details: isHardwareOnline ? 'ESP-WROOM-32 DevKit (Active)' : 'Disconnected (Watchdog Timeout)',
       },
     ];
-  }, [slots, activities]);
+  }, [slots, activities, isHardwareOnline]);
 
   return (
     <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 rounded-3xl p-6 sm:p-8 shadow-soft dark:shadow-none space-y-4 transition-colors duration-200">
@@ -99,12 +115,20 @@ export const DeviceList = ({ slots = [], activities = [] }) => {
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <span
                       className={`w-2 h-2 rounded-full inline-block ${
-                        isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
+                        device.status === 'Offline'
+                          ? 'bg-rose-500 animate-pulse'
+                          : isOnline
+                          ? 'bg-emerald-500 animate-pulse'
+                          : 'bg-amber-500'
                       }`}
                     />
                     <span
                       className={`text-xs font-semibold ${
-                        isOnline ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'
+                        device.status === 'Offline'
+                          ? 'text-rose-600 dark:text-rose-400'
+                          : isOnline
+                          ? 'text-emerald-600 dark:text-emerald-400'
+                          : 'text-amber-600 dark:text-amber-400'
                       }`}
                     >
                       {device.status}

@@ -129,9 +129,20 @@ E:/smart_parking/
   - **Heartbeat Sync (`HEARTBEAT_INTERVAL = 30000`):** ส่งอัปเดตระยะทางและสถานะทุกๆ 30 วินาที เพื่อรักษาสถานะออนไลน์บน Dashboard โดยไม่รบกวน Main Loop
   - **การทำงานเมื่อเน็ตหลุด (Non-blocking Wi-Fi Reconnect):** เซนเซอร์และไฟ LED ทำงานออฟไลน์ได้ตามปกติ 100% ไม่ค้าง ไม่ติด delay และจะซิงค์ขึ้น Supabase อัตโนมัติเมื่อเน็ตกลับมา
 
-### 4.5 การเชื่อมต่อ Supabase Realtime & REST API
-- **สถานะ:** ใช้งานได้จริง 100% (Subscribed เรียบร้อย)
-- **การแก้ไข URL:** ใน `.env` ปรับให้เหลือเฉพาะ Root Project URL (`https://kskcwaxvwcsxzijweoah.supabase.co`) และมีระบบ Auto-Sanitize ใน `supabase.js` เพื่อตัด `/rest/v1/` หรือเครื่องหมาย `/` ส่วนเกินออกให้อัตโนมัติ
+### 4.5 ระบบตรวจจับการเชื่อมต่อฮาร์ดแวร์แบบเรียลไทม์ (Heartbeat Watchdog System)
+- **ESP32 Firmware:**
+  - เพิ่มการซิงค์เวลาโลกผ่าน **NTP** (`pool.ntp.org`, `time.google.com`) ใน `setup()`
+  - ทุกครั้งที่ส่งข้อมูลหรือเกิด Heartbeat (ทุก 30 วินาที) บอร์ดจะแนบฟิลด์ `updated_at` (ISO8601 UTC) ขึ้นตาราง `parking_slots` ใน Supabase
+  - มี Serial Log แจ้งเตือน: `[Watchdog] 💓 Sending periodic hardware heartbeat to Supabase...`
+- **Frontend Realtime Watchdog Timer (ใน `App.jsx`):**
+  - กำหนดเวลา Timeout ไว้ที่ **50 วินาที** (`WATCHDOG_TIMEOUT_MS = 50000`, 30s Heartbeat + 20s Network Buffer)
+  - ทุกครั้งที่เบราว์เซอร์ได้รับสัญญาณ WebSocket Realtime จาก Supabase ตัวจับเวลา Watchdog จะรีเซ็ตเป็น 0 วินาที และยืนยันสถานะ **`Online` (ไฟเขียว)** ทันที
+  - หากบอร์ด ESP32 ถูกถอดปลั๊ก หลุด Wi-Fi หรือไม่มีสัญญาณส่งมาเกิน 50 วินาที ระบบ Watchdog จะสลับสถานะของบอร์ดและเซนเซอร์เป็น **`Offline` (ไฟแดงกระพริบเตือน)** อัตโนมัติ
+  - ค่า "Last Update" จะนับถอยหลังบอกระยะเวลาจริง เช่น `Just now`, `15s ago`, `2m ago (Offline)`
+- **การสะท้อนสถานะไปยัง UI ทุกจุด:**
+  - **Header:** แสดง Badge `Hardware Live` (ไฟเขียว) เมื่อบอร์ดต่ออยู่ และ `ESP32 Offline` (ไฟแดง) เมื่อขาดการเชื่อมต่อ
+  - **System Status (Dashboard):** กล่อง Diagnostic 4 ช่องแสดงสถานะ `Online` / `Offline` / `Paused` พร้อมสีไฟตามสถานะจริง
+  - **Hardware Telemetry (Usage):** ตารางอุปกรณ์ `DeviceList` แสดงสถานะของ ESP32 และเซนเซอร์ทั้งสองช่องตามผลตรวจจับจริงของ Watchdog ไม่มีการค้างค่าหลอก
 
 ---
 

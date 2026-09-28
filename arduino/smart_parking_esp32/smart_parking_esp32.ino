@@ -28,6 +28,7 @@
 #include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
+#include <time.h>
 
 // ==============================================================================
 // 1. NETWORK & SUPABASE CREDENTIALS
@@ -276,11 +277,18 @@ void updateSlotInSupabase(SlotState &slot) {
     http.addHeader("Prefer", "return=minimal");
 
     // Build JSON payload
-    StaticJsonDocument<200> doc;
+    StaticJsonDocument<256> doc;
 
     doc["distance"] = slot.distance;
     doc["status"] = slot.status;
     doc["sensor"] = slot.sensor;
+
+    time_t now = time(nullptr);
+    if (now > 100000) {
+      char timeBuf[30];
+      strftime(timeBuf, sizeof(timeBuf), "%Y-%m-%dT%H:%M:%SZ", gmtime(&now));
+      doc["updated_at"] = timeBuf;
+    }
 
     String requestBody;
 
@@ -627,6 +635,10 @@ void setup() {
       WiFi.localIP()
     );
 
+    // Synchronize NTP Time for accurate database updated_at & heartbeat watchdog
+    configTime(7 * 3600, 0, "pool.ntp.org", "time.google.com");
+    Serial.println("[NTP] Time synchronization started");
+
     // Initial sync of light states from Supabase on startup
     syncLightsFromSupabase();
 
@@ -757,6 +769,7 @@ void loop() {
     }
 
     if (isHeartbeat) {
+      Serial.println("[Watchdog] 💓 Sending periodic hardware heartbeat to Supabase...");
       lastHeartbeatTime = currentMillis;
       if (!initialSyncDone) {
         initialSyncDone = true;

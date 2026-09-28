@@ -15,6 +15,7 @@ export const Dashboard = ({
   onSelectTab,
   darkMode,
   onToggleDarkMode,
+  isHardwareOnline = true,
 }) => {
   return (
     <div className="space-y-6">
@@ -23,6 +24,7 @@ export const Dashboard = ({
         title="Smart Parking"
         subtitle="Intelligent parking management & IoT monitoring"
         showStatus={true}
+        isHardwareOnline={isHardwareOnline}
         activeTab={activeTab}
         onSelectTab={onSelectTab}
         darkMode={darkMode}

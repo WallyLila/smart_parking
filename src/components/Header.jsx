@@ -5,6 +5,7 @@ export const Header = ({
   title = "Smart Parking", 
   subtitle = "Monitor your parking area",
   showStatus = true,
+  isHardwareOnline = true,
   activeTab,
   onSelectTab,
   darkMode,
@@ -85,12 +86,24 @@ export const Header = ({
 
         {/* Status indicator */}
         {showStatus && (
-          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 text-xs font-semibold text-neutral-700 dark:text-neutral-300 shadow-soft-sm transition-colors">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            <span className="tracking-tight">System Online</span>
+          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 text-xs font-semibold text-neutral-700 dark:text-neutral-300 shadow-soft-sm transition-colors">
+            {isHardwareOnline ? (
+              <>
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span className="tracking-tight text-neutral-800 dark:text-neutral-200">Hardware Live</span>
+              </>
+            ) : (
+              <>
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                </span>
+                <span className="tracking-tight text-rose-600 dark:text-rose-400">ESP32 Offline</span>
+              </>
+            )}
           </div>
         )}
       </div>

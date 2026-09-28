@@ -6,7 +6,14 @@ import { ActivityTimeline } from '../components/ActivityTimeline';
 import { getAllParkingActivities, subscribeToActivityChanges, unsubscribeChannel } from '../services/parkingService';
 import { Car, Clock, TrendingUp, Activity as ActivityIcon } from 'lucide-react';
 
-export const Usage = ({ slots = [], activeTab, onSelectTab, darkMode, onToggleDarkMode }) => {
+export const Usage = ({
+  slots = [],
+  activeTab,
+  onSelectTab,
+  darkMode,
+  onToggleDarkMode,
+  isHardwareOnline = true,
+}) => {
   const [activities, setActivities] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -219,7 +226,7 @@ export const Usage = ({ slots = [], activeTab, onSelectTab, darkMode, onToggleDa
           <UsageChart activities={activities} />
         </div>
         <div className="lg:col-span-5">
-          <DeviceList slots={slots} activities={activities} />
+          <DeviceList slots={slots} activities={activities} isHardwareOnline={isHardwareOnline} />
         </div>
       </div>
 

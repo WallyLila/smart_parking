@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Layout } from './components/Layout';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Dashboard } from './pages/Dashboard';
@@ -21,12 +21,24 @@ import {
 import { isSupabaseConfigured } from './services/supabase';
 import { AiAssistant } from './components/AiAssistant';
 
+// Watchdog Timeout: 50s (ESP32 heartbeat is 30s + 20s network grace buffer)
+const WATCHDOG_TIMEOUT_MS = 50000;
 
 export const App = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [slots, setSlots] = useState(initialParkingSlots);
   const [systemStatus, setSystemStatus] = useState(initialSystemStatus);
   const [activities, setActivities] = useState(initialActivities);
+  const [isHardwareOnline, setIsHardwareOnline] = useState(false);
+  const [lastHeartbeat, setLastHeartbeat] = useState(0);
+
+  const lastHeartbeatRef = useRef(0);
+  const slotsRef = useRef(slots);
+
+  useEffect(() => {
+    slotsRef.current = slots;
+  }, [slots]);
+
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
       const savedTheme = localStorage.getItem('theme');
@@ -59,20 +71,34 @@ export const App = () => {
       if (isMounted) {
         setSlots(dbSlots);
         setActivities(dbActivities);
-        if (isSupabaseConfigured) {
-          setSystemStatus((prev) =>
-            prev.map((item) =>
-              item.id === 'esp32' ? { ...item, status: 'Supabase Online' } : item
-            )
-          );
+
+        // Check most recent hardware activity timestamp
+        const slotTimes = dbSlots
+          .map((s) => s.updated_at ? new Date(s.updated_at).getTime() : 0)
+          .filter((t) => !isNaN(t) && t > 0);
+        const actTimes = dbActivities
+          .map((a) => a.created_at ? new Date(a.created_at).getTime() : 0)
+          .filter((t) => !isNaN(t) && t > 0);
+        const latestActivity = Math.max(0, ...slotTimes, ...actTimes);
+
+        if (latestActivity > 0) {
+          lastHeartbeatRef.current = latestActivity;
+          setLastHeartbeat(latestActivity);
+          const isLive = Date.now() - latestActivity < WATCHDOG_TIMEOUT_MS;
+          setIsHardwareOnline(isLive);
         }
       }
     };
 
     loadData();
 
-    // Subscribe to real-time slot changes from Supabase (e.g. from ESP32)
+    // Subscribe to real-time slot changes from Supabase (e.g. from ESP32 heartbeat / distance)
     const slotChannel = subscribeToSlotChanges((updatedSlot) => {
+      const now = Date.now();
+      lastHeartbeatRef.current = now;
+      setLastHeartbeat(now);
+      setIsHardwareOnline(true);
+
       setSlots((prev) => {
         const exists = prev.some((s) => String(s.id) === String(updatedSlot.id));
         if (exists) {
@@ -86,6 +112,11 @@ export const App = () => {
 
     // Subscribe to real-time activity log inserts
     const actChannel = subscribeToActivityChanges((newAct) => {
+      const now = Date.now();
+      lastHeartbeatRef.current = now;
+      setLastHeartbeat(now);
+      setIsHardwareOnline(true);
+
       setActivities((prev) => [newAct, ...prev.slice(0, 5)]);
     });
 
@@ -94,6 +125,69 @@ export const App = () => {
       if (slotChannel) unsubscribeChannel(slotChannel);
       if (actChannel) unsubscribeChannel(actChannel);
     };
+  }, []);
+
+  // Heartbeat Watchdog Monitor: Periodic check every 1 second
+  useEffect(() => {
+    const checkWatchdog = () => {
+      const lh = lastHeartbeatRef.current;
+      const now = Date.now();
+      const elapsed = lh > 0 ? now - lh : Infinity;
+      const online = lh > 0 && elapsed < WATCHDOG_TIMEOUT_MS;
+
+      setIsHardwareOnline((prev) => (prev !== online ? online : prev));
+
+      let lastUpdateText = 'No Signal';
+      if (lh > 0) {
+        if (elapsed < 3000) lastUpdateText = 'Just now';
+        else if (elapsed < 60000) lastUpdateText = `${Math.round(elapsed / 1000)}s ago`;
+        else if (elapsed < 3600000) lastUpdateText = `${Math.floor(elapsed / 60000)}m ago`;
+        else lastUpdateText = `${Math.floor(elapsed / 3600000)}h ago`;
+      }
+
+      const currentSlots = slotsRef.current;
+      const slot1 = currentSlots.find((s) => String(s.id) === '1');
+      const slot2 = currentSlots.find((s) => String(s.id) === '2');
+
+      const s1Status = !online
+        ? 'Offline'
+        : slot1?.sensor === 'disabled'
+        ? 'Paused'
+        : 'Online';
+
+      const s2Status = !online
+        ? 'Offline'
+        : slot2?.sensor === 'disabled'
+        ? 'Paused'
+        : 'Online';
+
+      setSystemStatus([
+        {
+          id: 'esp32',
+          name: 'ESP32 Controller',
+          status: online ? 'Online' : 'Offline',
+        },
+        {
+          id: 'sensor01',
+          name: 'Ultrasonic Sensor 01',
+          status: s1Status,
+        },
+        {
+          id: 'sensor02',
+          name: 'Ultrasonic Sensor 02',
+          status: s2Status,
+        },
+        {
+          id: 'lastUpdate',
+          name: 'Last Update',
+          status: lastUpdateText,
+        },
+      ]);
+    };
+
+    checkWatchdog();
+    const intervalId = setInterval(checkWatchdog, 1000);
+    return () => clearInterval(intervalId);
   }, []);
 
   const handleToggleDarkMode = (val) => {
@@ -206,6 +300,7 @@ export const App = () => {
             onSelectTab={setActiveTab}
             darkMode={darkMode}
             onToggleDarkMode={handleToggleDarkMode}
+            isHardwareOnline={isHardwareOnline}
           />
         )}
 
@@ -216,6 +311,7 @@ export const App = () => {
             onSelectTab={setActiveTab}
             darkMode={darkMode}
             onToggleDarkMode={handleToggleDarkMode}
+            isHardwareOnline={isHardwareOnline}
           />
         )}
 
