@@ -24,6 +24,7 @@ import {
   getOllamaModel,
   setOllamaModel,
   checkOllamaConnection,
+  sanitizeHost,
   DEFAULT_OLLAMA_HOST,
   DEFAULT_OLLAMA_MODEL,
 } from '../services/aiService';
@@ -207,7 +208,9 @@ export const AiAssistant = ({
     setIsTesting(true);
     setTestResult(null);
     try {
-      const result = await checkOllamaConnection(hostInput);
+      const sanitized = sanitizeHost(hostInput);
+      setHostInput(sanitized);
+      const result = await checkOllamaConnection(sanitized);
       setTestResult(result);
       const hasModels = result.success && result.models && result.models.length > 0;
       setOllamaOnline(hasModels);
@@ -228,7 +231,9 @@ export const AiAssistant = ({
 
   // Save Ollama settings
   const handleSaveSettings = () => {
-    setOllamaHost(hostInput);
+    const sanitized = sanitizeHost(hostInput);
+    setHostInput(sanitized);
+    setOllamaHost(sanitized);
     setOllamaModel(modelInput);
     setShowSettings(false);
   };
@@ -460,12 +465,12 @@ export const AiAssistant = ({
                   )}
                   <div className="space-y-0.5">
                     <p className="font-bold">
-                      {testResult.success ? 'เชื่อมต่อ Ollama สำเร็จ!' : 'ยังไม่ได้เปิด Ollama ในเครื่อง'}
+                      {testResult.success ? 'เชื่อมต่อ Ollama สำเร็จ!' : 'ยังไม่สามารถเชื่อมต่อ Ollama ได้'}
                     </p>
                     <p className="text-[11px] leading-relaxed">
                       {testResult.success
                         ? `พบโมเดลในเครื่อง: ${testResult.models.join(', ') || modelInput}`
-                        : 'ระบบจะสลับไปใช้ Local Smart Engine ภายในเว็บอัตโนมัติ ซึ่งสามารถสั่งเปิด/ปิดไฟและเซนเซอร์ได้ 100%'}
+                        : (testResult.error || 'ระบบจะสลับไปใช้ Local Smart Engine ภายในเว็บอัตโนมัติ')}
                     </p>
                   </div>
                 </div>

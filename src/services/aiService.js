@@ -7,18 +7,47 @@
  */
 
 export const DEFAULT_OLLAMA_HOST = 'http://localhost:11434';
-export const DEFAULT_OLLAMA_MODEL = 'deepseek-r1:1.5b';
+export const DEFAULT_OLLAMA_MODEL = 'qwen2.5:3b';
+
+/**
+ * Sanitize host URL:
+ * - Auto-prepends https:// (or http:// for localhost) if omitted
+ * - Strips :11434 if accidentally appended to trycloudflare domain
+ * - Strips trailing slashes
+ */
+export const sanitizeHost = (host) => {
+  if (!host) return DEFAULT_OLLAMA_HOST;
+  let clean = host.trim();
+
+  // Strip :11434 if accidentally pasted on cloudflare tunnel URL
+  if (clean.includes('trycloudflare.com:11434')) {
+    clean = clean.replace(':11434', '');
+  }
+
+  // Auto-prepend protocol if missing
+  if (!/^https?:\/\//i.test(clean)) {
+    if (clean.includes('localhost') || clean.startsWith('127.0.0.1')) {
+      clean = `http://${clean}`;
+    } else {
+      clean = `https://${clean}`;
+    }
+  }
+
+  return clean.replace(/\/+$/, '');
+};
 
 export const getOllamaHost = () => {
   if (typeof window !== 'undefined') {
-    return localStorage.getItem('ollama_host') || DEFAULT_OLLAMA_HOST;
+    const saved = localStorage.getItem('ollama_host');
+    if (saved) return sanitizeHost(saved);
   }
   return DEFAULT_OLLAMA_HOST;
 };
 
 export const setOllamaHost = (host) => {
   if (typeof window !== 'undefined') {
-    localStorage.setItem('ollama_host', host.trim() || DEFAULT_OLLAMA_HOST);
+    const cleaned = sanitizeHost(host);
+    localStorage.setItem('ollama_host', cleaned);
   }
 };
 
@@ -39,11 +68,13 @@ export const setOllamaModel = (model) => {
  * Test connection to local Ollama instance and list installed models
  */
 export const checkOllamaConnection = async (host = getOllamaHost()) => {
-  const cleanHost = host.trim().replace(/\/+$/, '');
+  const cleanHost = sanitizeHost(host);
   const endpoints = [
     `${cleanHost}/api/tags`,
     `/ollama/api/tags`, // Vite proxy fallback
   ];
+
+  let lastErrorDetail = '';
 
   for (const url of endpoints) {
     try {
@@ -56,15 +87,17 @@ export const checkOllamaConnection = async (host = getOllamaHost()) => {
           models: models.length > 0 ? models : [getOllamaModel()],
           activeHost: url.startsWith('/ollama') ? '/ollama' : cleanHost,
         };
+      } else {
+        lastErrorDetail = `HTTP ${res.status} (${res.statusText || 'Error'})`;
       }
     } catch (e) {
-      // Continue to next endpoint
+      lastErrorDetail = e.message || 'Network connection failed';
     }
   }
 
   return {
     success: false,
-    error: 'ไม่สามารถเชื่อมต่อ Ollama บนพอร์ต 11434 ได้ (กรุณาตรวจสอบว่าเปิดโปรแกรม Ollama หรือรันคำสั่งในเครื่องแล้วหรือไม่)',
+    error: `เชื่อมต่อไม่สำเร็จ: ${lastErrorDetail} ที่ [${cleanHost}/api/tags]`,
     models: [],
   };
 };
