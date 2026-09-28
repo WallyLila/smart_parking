@@ -80,8 +80,16 @@ export const ParkingSlotCard = ({ slot, onToggleLight, onToggleStatus }) => {
           <div className="text-right">
             <span className="text-[11px] font-medium text-neutral-400 block uppercase tracking-wider">Sensor</span>
             <span className="text-xs font-bold text-neutral-700 dark:text-neutral-300 uppercase tracking-wide flex items-center justify-end gap-1.5 mt-0.5 transition-colors">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-              {slot.sensor || 'ONLINE'}
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  slot.sensor === 'disabled'
+                    ? 'bg-amber-500 ring-2 ring-amber-200 dark:ring-amber-950'
+                    : 'bg-emerald-500'
+                }`}
+              />
+              <span className={slot.sensor === 'disabled' ? 'text-amber-600 dark:text-amber-400' : ''}>
+                {slot.sensor === 'disabled' ? 'DISABLED' : (slot.sensor || 'ONLINE')}
+              </span>
             </span>
           </div>
         </div>
@@ -92,13 +100,20 @@ export const ParkingSlotCard = ({ slot, onToggleLight, onToggleStatus }) => {
             <span className="text-xs text-neutral-700 dark:text-neutral-300 block font-semibold transition-colors">
               Parking Light
             </span>
-            <span
-              className={`text-xs font-bold block mt-0.5 ${
-                slot.light ? 'text-neutral-900 dark:text-emerald-400' : 'text-neutral-400 dark:text-neutral-500'
-              }`}
-            >
-              {slot.light ? 'ON' : 'OFF'}
-            </span>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span
+                className={`text-xs font-bold ${
+                  slot.light ? 'text-neutral-900 dark:text-emerald-400' : 'text-neutral-400 dark:text-neutral-500'
+                }`}
+              >
+                {slot.light ? 'ON' : 'OFF'}
+              </span>
+              {slot.id === 1 && (
+                <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium">
+                  {slot.light ? '• LEDs Active' : '• LEDs Off'}
+                </span>
+              )}
+            </div>
           </div>
           <Toggle
             checked={slot.light}

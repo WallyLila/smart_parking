@@ -1,19 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { Layout } from './components/Layout';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { Dashboard } from './pages/Dashboard';
 import { Usage } from './pages/Usage';
-import { Favorites } from './pages/Favorites';
 import { Account } from './pages/Account';
 import { initialParkingSlots, initialSystemStatus, initialActivities } from './data/mockData';
 import { 
   getParkingSlots, 
   getRecentActivities, 
   toggleSlotLight, 
+  setSlotLight,
+  setAllSlotLights,
+  updateSlotSensorStatus,
+  setAllSlotSensorStatus,
   updateSlotStatusInDb, 
   subscribeToSlotChanges, 
-  subscribeToActivityChanges 
+  subscribeToActivityChanges,
+  unsubscribeChannel 
 } from './services/parkingService';
 import { isSupabaseConfigured } from './services/supabase';
+import { AiAssistant } from './components/AiAssistant';
+
 
 export const App = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -84,8 +91,8 @@ export const App = () => {
 
     return () => {
       isMounted = false;
-      if (slotChannel) slotChannel.unsubscribe();
-      if (actChannel) actChannel.unsubscribe();
+      if (slotChannel) unsubscribeChannel(slotChannel);
+      if (actChannel) unsubscribeChannel(actChannel);
     };
   }, []);
 
@@ -144,51 +151,92 @@ export const App = () => {
     await updateSlotStatusInDb(slotId, newStatus, newDistance);
   };
 
+  // Explicitly set slot light (Slot 1, Slot 2, or All)
+  const handleSetLight = async (slotId, newLight) => {
+    if (slotId === 'all') {
+      setSlots((prev) => prev.map((s) => ({ ...s, light: newLight })));
+      await setAllSlotLights(newLight);
+    } else {
+      setSlots((prev) =>
+        prev.map((s) => (String(s.id) === String(slotId) ? { ...s, light: newLight } : s))
+      );
+      await setSlotLight(slotId, newLight);
+    }
+  };
+
+  // Explicitly set ultrasonic sensor state ('online' | 'disabled')
+  const handleSetSensor = async (slotId, sensorStatus) => {
+    if (slotId === 'all') {
+      setSlots((prev) => prev.map((s) => ({ ...s, sensor: sensorStatus })));
+      setSystemStatus((prev) =>
+        prev.map((item) =>
+          item.id.startsWith('sensor')
+            ? { ...item, status: sensorStatus === 'online' ? 'Online' : 'Disabled' }
+            : item
+        )
+      );
+      await setAllSlotSensorStatus(sensorStatus);
+    } else {
+      setSlots((prev) =>
+        prev.map((s) => (String(s.id) === String(slotId) ? { ...s, sensor: sensorStatus } : s))
+      );
+      const sensorKey = `sensor0${slotId}`;
+      setSystemStatus((prev) =>
+        prev.map((item) =>
+          item.id === sensorKey
+            ? { ...item, status: sensorStatus === 'online' ? 'Online' : 'Disabled' }
+            : item
+        )
+      );
+      await updateSlotSensorStatus(slotId, sensorStatus);
+    }
+  };
+
   return (
     <Layout activeTab={activeTab} onSelectTab={setActiveTab}>
-      {activeTab === 'dashboard' && (
-        <Dashboard
-          slots={slots}
-          systemStatus={systemStatus}
-          activities={activities}
-          onToggleLight={handleToggleLight}
-          onToggleStatus={handleToggleStatus}
-          activeTab={activeTab}
-          onSelectTab={setActiveTab}
-          darkMode={darkMode}
-          onToggleDarkMode={handleToggleDarkMode}
-        />
-      )}
+      <ErrorBoundary>
+        {activeTab === 'dashboard' && (
+          <Dashboard
+            slots={slots}
+            systemStatus={systemStatus}
+            activities={activities}
+            onToggleLight={handleToggleLight}
+            onToggleStatus={handleToggleStatus}
+            activeTab={activeTab}
+            onSelectTab={setActiveTab}
+            darkMode={darkMode}
+            onToggleDarkMode={handleToggleDarkMode}
+          />
+        )}
 
-      {activeTab === 'usage' && (
-        <Usage
-          activeTab={activeTab}
-          onSelectTab={setActiveTab}
-          darkMode={darkMode}
-          onToggleDarkMode={handleToggleDarkMode}
-        />
-      )}
+        {activeTab === 'usage' && (
+          <Usage
+            slots={slots}
+            activeTab={activeTab}
+            onSelectTab={setActiveTab}
+            darkMode={darkMode}
+            onToggleDarkMode={handleToggleDarkMode}
+          />
+        )}
 
-      {activeTab === 'favorites' && (
-        <Favorites
-          slots={slots}
-          onToggleLight={handleToggleLight}
-          onToggleStatus={handleToggleStatus}
-          activeTab={activeTab}
-          onSelectTab={setActiveTab}
-          darkMode={darkMode}
-          onToggleDarkMode={handleToggleDarkMode}
-        />
-      )}
+        {activeTab === 'account' && (
+          <Account
+            activeTab={activeTab}
+            onSelectTab={setActiveTab}
+            darkMode={darkMode}
+            onToggleDarkMode={handleToggleDarkMode}
+          />
+        )}
+      </ErrorBoundary>
 
-      {activeTab === 'account' && (
-        <Account
-          activeTab={activeTab}
-          onSelectTab={setActiveTab}
-          darkMode={darkMode}
-          onToggleDarkMode={handleToggleDarkMode}
-        />
-      )}
+      {/* Floating Modern AI Assistant with Voice & Hardware Controls */}
+      <AiAssistant
+        slots={slots}
+        systemStatus={systemStatus}
+        onSetLight={handleSetLight}
+        onSetSensor={handleSetSensor}
+        darkMode={darkMode}
+      />
     </Layout>
   );
 };

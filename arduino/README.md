@@ -22,7 +22,11 @@
 | | GND | GND | กราวด์ร่วม |
 | | TRIG | **GPIO 5** | Trigger ส่งคลื่น |
 | | ECHO | **GPIO 18** | Echo รับคลื่น |
-| **LED / Relay #1** | Anode (+) | **GPIO 2** | ไฟจอด Slot 1 |
+| **LED ส่องสว่าง #1** | Anode (+) | **GPIO 2** | ไฟจอด Slot 1 |
+| | Cathode (-) | GND (ผ่าน R 220Ω) | |
+| **Green LED #1** | Anode (+) | **GPIO 16** | ไฟสถานะว่าง (Available) |
+| | Cathode (-) | GND (ผ่าน R 220Ω) | |
+| **Red LED #1** | Anode (+) | **GPIO 15** | ไฟสถานะไม่ว่าง (Occupied) |
 | | Cathode (-) | GND (ผ่าน R 220Ω) | |
 
 ### ช่องจอดที่ 2 (Parking Slot 02)
@@ -32,7 +36,11 @@
 | | GND | GND | กราวด์ร่วม |
 | | TRIG | **GPIO 19** | Trigger ส่งคลื่น |
 | | ECHO | **GPIO 21** | Echo รับคลื่น |
-| **LED / Relay #2** | Anode (+) | **GPIO 4** | ไฟจอด Slot 2 |
+| **LED ส่องสว่าง #2** | Anode (+) | **GPIO 4** | ไฟจอด Slot 2 |
+| | Cathode (-) | GND (ผ่าน R 220Ω) | |
+| **Green LED #2** | Anode (+) | **GPIO 22** | ไฟสถานะว่าง (Available) |
+| | Cathode (-) | GND (ผ่าน R 220Ω) | |
+| **Red LED #2** | Anode (+) | **GPIO 23** | ไฟสถานะไม่ว่าง (Occupied) |
 | | Cathode (-) | GND (ผ่าน R 220Ω) | |
 
 ---

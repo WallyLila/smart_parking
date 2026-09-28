@@ -8,7 +8,13 @@ export const SensorStatus = ({ name, status, isLastUpdate = false }) => {
       </span>
       <div className="flex items-center gap-1.5 mt-1.5">
         {!isLastUpdate && (
-          <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+          <span
+            className={`w-2 h-2 rounded-full inline-block ${
+              status?.toLowerCase() === 'disabled' || status?.toLowerCase() === 'offline'
+                ? 'bg-amber-500 ring-2 ring-amber-200 dark:ring-amber-950'
+                : 'bg-emerald-500'
+            }`}
+          />
         )}
         <span
           className={`text-xs font-bold ${

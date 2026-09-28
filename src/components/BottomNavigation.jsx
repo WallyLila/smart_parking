@@ -1,11 +1,10 @@
 import React from 'react';
-import { Home as House, BarChart3, Heart, User } from 'lucide-react';
+import { Home as House, BarChart3, User } from 'lucide-react';
 
 export const BottomNavigation = ({ activeTab, onSelectTab }) => {
   const navItems = [
     { id: 'dashboard', label: 'Home', icon: House },
     { id: 'usage', label: 'Usage', icon: BarChart3 },
-    { id: 'favorites', label: 'Favorites', icon: Heart },
     { id: 'account', label: 'Account', icon: User },
   ];
 

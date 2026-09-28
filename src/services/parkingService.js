@@ -56,11 +56,55 @@ export const getRecentActivities = async () => {
 };
 
 /**
+ * Fetch full parking activities history from Supabase with optional limit
+ */
+export const getAllParkingActivities = async (limit = 500) => {
+  if (!isSupabaseConfigured) {
+    return initialActivities.map((item) => ({
+      ...item,
+      slot_id: item.slot_id || 1,
+      created_at: new Date(Date.now() - (item.id * 300000)).toISOString(),
+    }));
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('parking_activities')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    if (data && data.length > 0) {
+      return data;
+    }
+    return initialActivities.map((item) => ({
+      ...item,
+      slot_id: item.slot_id || 1,
+      created_at: new Date(Date.now() - (item.id * 300000)).toISOString(),
+    }));
+  } catch (err) {
+    console.warn('Failed to fetch full activities from Supabase:', err.message);
+    return initialActivities.map((item) => ({
+      ...item,
+      slot_id: item.slot_id || 1,
+      created_at: new Date(Date.now() - (item.id * 300000)).toISOString(),
+    }));
+  }
+};
+
+/**
  * Update slot light in Supabase
  */
 export const toggleSlotLight = async (slotId, currentLight) => {
   const newLight = !currentLight;
+  return setSlotLight(slotId, newLight);
+};
 
+/**
+ * Explicitly set light for a single slot in Supabase
+ */
+export const setSlotLight = async (slotId, newLight) => {
   if (isSupabaseConfigured) {
     try {
       const { error } = await supabase
@@ -70,12 +114,87 @@ export const toggleSlotLight = async (slotId, currentLight) => {
 
       if (error) throw error;
     } catch (err) {
-      console.error('Error updating light status in Supabase:', err);
+      console.error(`Error updating light status for slot ${slotId} in Supabase:`, err);
     }
   }
 
   return newLight;
 };
+
+/**
+ * Set light state for all slots simultaneously
+ */
+export const setAllSlotLights = async (newLight) => {
+  if (isSupabaseConfigured) {
+    try {
+      const { error } = await supabase
+        .from('parking_slots')
+        .update({ light: newLight, updated_at: new Date().toISOString() })
+        .in('id', [1, 2]);
+
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error updating all lights in Supabase:', err);
+    }
+  }
+  return newLight;
+};
+
+/**
+ * Update ultrasonic sensor state (e.g. 'online' | 'disabled') for a slot
+ */
+export const updateSlotSensorStatus = async (slotId, sensorStatus) => {
+  if (isSupabaseConfigured) {
+    try {
+      const { error } = await supabase
+        .from('parking_slots')
+        .update({ sensor: sensorStatus, updated_at: new Date().toISOString() })
+        .eq('id', slotId);
+
+      if (error) throw error;
+
+      // Log to activities
+      const text = `Ultrasonic Sensor 0${slotId} is now ${sensorStatus.toUpperCase()}`;
+      await supabase.from('parking_activities').insert({
+        slot_id: slotId,
+        text,
+        status: 'sensor',
+        created_at: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.error(`Error updating sensor status for slot ${slotId} in Supabase:`, err);
+    }
+  }
+  return sensorStatus;
+};
+
+/**
+ * Set sensor state for all slots simultaneously
+ */
+export const setAllSlotSensorStatus = async (sensorStatus) => {
+  if (isSupabaseConfigured) {
+    try {
+      const { error } = await supabase
+        .from('parking_slots')
+        .update({ sensor: sensorStatus, updated_at: new Date().toISOString() })
+        .in('id', [1, 2]);
+
+      if (error) throw error;
+
+      // Log to activities
+      await supabase.from('parking_activities').insert({
+        slot_id: 1,
+        text: `All Ultrasonic Sensors are now ${sensorStatus.toUpperCase()}`,
+        status: 'sensor',
+        created_at: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.error('Error updating all sensors in Supabase:', err);
+    }
+  }
+  return sensorStatus;
+};
+
 
 /**
  * Update slot status and distance in Supabase (used by simulation or ESP32)
@@ -115,11 +234,12 @@ export const updateSlotStatusInDb = async (slotId, newStatus, newDistance) => {
 /**
  * Subscribe to Supabase Realtime changes for parking slots
  */
-export const subscribeToSlotChanges = (onUpdate) => {
+export const subscribeToSlotChanges = (onUpdate, customChannelName) => {
   if (!isSupabaseConfigured) return null;
 
+  const channelName = customChannelName || `realtime_slots_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
   const channel = supabase
-    .channel('realtime_parking_slots')
+    .channel(channelName)
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'parking_slots' },
@@ -131,7 +251,7 @@ export const subscribeToSlotChanges = (onUpdate) => {
       }
     )
     .subscribe((status) => {
-      console.log('[Supabase Realtime] parking_slots subscription status:', status);
+      console.log(`[Supabase Realtime] ${channelName} subscription status:`, status);
     });
 
   return channel;
@@ -140,11 +260,12 @@ export const subscribeToSlotChanges = (onUpdate) => {
 /**
  * Subscribe to Supabase Realtime changes for new activities
  */
-export const subscribeToActivityChanges = (onNewActivity) => {
+export const subscribeToActivityChanges = (onNewActivity, customChannelName) => {
   if (!isSupabaseConfigured) return null;
 
+  const channelName = customChannelName || `realtime_activities_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
   const channel = supabase
-    .channel('realtime_parking_activities')
+    .channel(channelName)
     .on(
       'postgres_changes',
       { event: 'INSERT', schema: 'public', table: 'parking_activities' },
@@ -153,16 +274,30 @@ export const subscribeToActivityChanges = (onNewActivity) => {
         if (payload.new && onNewActivity) {
           onNewActivity({
             id: payload.new.id,
+            slot_id: payload.new.slot_id,
             text: payload.new.text,
             time: 'Just now',
             status: payload.new.status,
+            created_at: payload.new.created_at || new Date().toISOString(),
           });
         }
       }
     )
     .subscribe((status) => {
-      console.log('[Supabase Realtime] parking_activities subscription status:', status);
+      console.log(`[Supabase Realtime] ${channelName} subscription status:`, status);
     });
 
   return channel;
+};
+
+/**
+ * Safely remove a Supabase Realtime channel
+ */
+export const unsubscribeChannel = (channel) => {
+  if (!channel || !isSupabaseConfigured) return;
+  try {
+    supabase.removeChannel(channel);
+  } catch (err) {
+    console.warn('Error removing channel:', err);
+  }
 };
