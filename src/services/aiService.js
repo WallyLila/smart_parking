@@ -17,7 +17,8 @@ export const DEFAULT_OLLAMA_MODEL = 'qwen2.5:3b';
  */
 export const sanitizeHost = (host) => {
   if (!host) return DEFAULT_OLLAMA_HOST;
-  let clean = host.trim();
+  // Remove all whitespace characters (spaces, line breaks, tabs) from any part of URL
+  let clean = host.replace(/\s+/g, '');
 
   // Strip :11434 if accidentally pasted on cloudflare tunnel URL
   if (clean.includes('trycloudflare.com:11434')) {
@@ -69,10 +70,10 @@ export const setOllamaModel = (model) => {
  */
 export const checkOllamaConnection = async (host = getOllamaHost()) => {
   const cleanHost = sanitizeHost(host);
-  const endpoints = [
-    `${cleanHost}/api/tags`,
-    `/ollama/api/tags`, // Vite proxy fallback
-  ];
+  const isRemote = !cleanHost.includes('localhost') && !cleanHost.includes('127.0.0.1');
+  const endpoints = isRemote
+    ? [`${cleanHost}/api/tags`]
+    : [`${cleanHost}/api/tags`, `/ollama/api/tags`];
 
   let lastErrorDetail = '';
 
@@ -168,12 +169,15 @@ async function callOllama(prompt, systemContext, executeAction) {
     },
   };
 
-  const endpoints = [
-    `${host}/api/chat`,
-    `/ollama/api/chat`,
-    `${host}/v1/chat/completions`,
-    `/ollama/v1/chat/completions`,
-  ];
+  const isRemote = !host.includes('localhost') && !host.includes('127.0.0.1');
+  const endpoints = isRemote
+    ? [`${host}/api/chat`, `${host}/v1/chat/completions`]
+    : [
+        `${host}/api/chat`,
+        `/ollama/api/chat`,
+        `${host}/v1/chat/completions`,
+        `/ollama/v1/chat/completions`,
+      ];
 
   let res = null;
   let rawData = null;
